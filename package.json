@@ -1,32 +1,39 @@
 {
   "name": "ladyarray.github.io",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "Portfolio personal de Regy con React, Tailwind, Framer Motion y React Three Fiber.",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "rm -rf dist && vite build",
+    "build": "vite build",
     "preview": "vite preview",
-    "deploy": "gh-pages -d dist"
+    "deploy": "npm run build && gh-pages -d dist"
+  },
+  "engines": {
+    "node": ">=18.18.0"
+  },
+  "keywords": [
+    "portfolio",
+    "react",
+    "tailwind",
+    "r3f"
+  ],
+  "license": "ISC",
+  "dependencies": {
+    "@react-three/fiber": "^9.5.0",
+    "framer-motion": "^12.38.0",
+    "lucide-react": "^1.6.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "three": "^0.183.2"
   },
   "devDependencies": {
-    "@stylelint/postcss-css-in-js": "^0.38.0",
-    "eslint": "^8.20.0",
-    "eslint-config-standard": "17.0.0-1",
-    "eslint-plugin-import": "^2.26.0",
-    "eslint-plugin-n": "14.0.0",
-    "eslint-plugin-promise": "^6.0.0",
+    "@vitejs/plugin-react": "^4.3.3",
+    "autoprefixer": "^10.4.20",
     "gh-pages": "^4.0.0",
-    "postcss": "^8.4.14",
-    "postcss-html": "^1.5.0",
-    "postcss-jsx": "^0.36.4",
-    "postcss-nesting": "^10.1.10",
-    "postcss-styled": "^0.34.0",
-    "postcss-syntax": "^0.36.2",
-    "stylelint": "14.9.0",
-    "stylelint-config-standard": "^26.0.0",
-    "vite": "^3.0.0"
-  },
-  "keywords": [],
-  "license": "ISC"
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "vite": "^5.4.10"
+  }
 }

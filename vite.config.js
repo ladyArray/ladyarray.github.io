@@ -1,16 +1,25 @@
-import path from "path";
-const isGitHubPages = true;
-const folderName = path.basename(process.cwd()) + "/";
-const mode = process.env.NODE_ENV === "production" ? "production" : "development";
-const base = mode === "production" && isGitHubPages ? "/" + folderName : "/";
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
 
-export default {
-  root: "src",
-  base,
-  mode,
-  publicDir: "../public",
+export default defineConfig({
+  plugins: [react()],
+  base: '/',
   build: {
-    outDir: "../dist",
-    assetsDir: "./"
+    chunkSizeWarningLimit: 900,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) {
+            return undefined;
+          }
+
+          if (id.includes('three') || id.includes('@react-three/fiber')) {
+            return 'three-vendor';
+          }
+
+          return undefined;
+        }
+      }
+    }
   }
-};
+});
