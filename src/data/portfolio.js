@@ -24,7 +24,9 @@ const portfolioEn = {
       }
     },
     hero: {
-      visualDirectionEyebrow: 'Visual Direction'
+      visualDirectionEyebrow: 'Visual Direction',
+      sceneLabel: 'Interactive Field',
+      sceneHint: 'Move across the hero or tap to release a pulse through the orbit.'
     },
     sections: {
       about: 'About',

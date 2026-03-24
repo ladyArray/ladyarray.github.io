@@ -1,7 +1,7 @@
 import { Suspense, lazy } from 'react';
-import { motion } from 'framer-motion';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
 import Reveal from './Reveal';
+import InteractiveSurface from './InteractiveSurface';
 
 const SceneCanvas = lazy(() => import('./SceneCanvas'));
 
@@ -53,11 +53,8 @@ export default function HeroSection({ hero, visualDirection, ui }) {
 
             <Reveal delay={0.2} className="mt-10 flex flex-wrap gap-3">
               {hero.highlights.map((item) => (
-                <span
-                  key={item}
-                  className="rounded-full border border-white/10 bg-white/[0.045] px-4 py-2 text-sm text-mist shadow-soft backdrop-blur-lg"
-                >
-                  {item}
+                <span key={item} className="tag-chip shadow-soft backdrop-blur-lg">
+                  <span>{item}</span>
                 </span>
               ))}
             </Reveal>
@@ -70,22 +67,27 @@ export default function HeroSection({ hero, visualDirection, ui }) {
                 <Suspense fallback={<SceneFallback />}>
                   <SceneCanvas />
                 </Suspense>
+                <div className="scene-ui">
+                  <div className="scene-badge">
+                    <span className="scene-badge-dot" />
+                    {ui.sceneLabel}
+                  </div>
+                  <div className="scene-hint hidden sm:block">{ui.sceneHint}</div>
+                </div>
               </div>
 
               <div className="relative mt-4 grid gap-3 sm:grid-cols-2">
                 {hero.metrics.map((metric, index) => (
-                  <motion.div
-                    key={metric.label}
-                    className="rounded-[1.4rem] border border-white/10 bg-white/[0.045] p-4 backdrop-blur-xl"
-                    initial={{ opacity: 0, y: 18 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, amount: 0.45 }}
-                    transition={{ duration: 0.7, delay: 0.18 + index * 0.08, ease: [0.22, 1, 0.36, 1] }}
-                    whileHover={{ y: -4 }}
-                  >
-                    <p className="text-xs uppercase tracking-[0.24em] text-cobalt/90">{metric.label}</p>
-                    <p className="mt-3 text-lg font-medium text-white">{metric.value}</p>
-                  </motion.div>
+                  <Reveal key={metric.label} delay={0.18 + index * 0.06} y={22}>
+                    <InteractiveSurface
+                      className="rounded-[1.4rem] border border-white/10 bg-white/[0.045] p-4 backdrop-blur-xl"
+                      intensity={8}
+                      lift={7}
+                    >
+                      <p className="text-xs uppercase tracking-[0.24em] text-cobalt/90">{metric.label}</p>
+                      <p className="mt-3 text-lg font-medium text-white">{metric.value}</p>
+                    </InteractiveSurface>
+                  </Reveal>
                 ))}
               </div>
             </div>
@@ -101,13 +103,15 @@ export default function HeroSection({ hero, visualDirection, ui }) {
               </div>
               <div className="grid gap-4 sm:grid-cols-3">
                 {hero.orbit.map((item) => (
-                  <div
+                  <InteractiveSurface
                     key={item.title}
                     className="rounded-[1.4rem] border border-white/10 bg-white/[0.03] p-4"
+                    intensity={9}
+                    lift={8}
                   >
                     <p className="text-sm uppercase tracking-[0.22em] text-mist">{item.title}</p>
                     <p className="mt-3 text-sm leading-7 text-mist/90">{item.copy}</p>
-                  </div>
+                  </InteractiveSurface>
                 ))}
               </div>
             </div>

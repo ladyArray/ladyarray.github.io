@@ -1,7 +1,7 @@
-import { motion } from 'framer-motion';
 import { ArrowUpRight, GitBranch } from 'lucide-react';
 import Reveal from './Reveal';
 import SectionHeading from './SectionHeading';
+import InteractiveSurface from './InteractiveSurface';
 
 function ProjectPreview({ accent }) {
   const [start, end] = accent;
@@ -13,16 +13,22 @@ function ProjectPreview({ accent }) {
         background: `radial-gradient(circle at 18% 22%, ${start}55, transparent 30%), radial-gradient(circle at 78% 24%, ${end}50, transparent 32%), linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0)), linear-gradient(145deg, rgba(7,11,24,0.96), rgba(13,19,36,0.86))`
       }}
     >
-      <div className="absolute inset-4 rounded-[1.35rem] border border-white/10 bg-white/[0.025]" />
-      <div className="absolute left-6 top-6 h-20 w-20 rounded-full blur-2xl" style={{ backgroundColor: `${start}66` }} />
-      <div className="absolute bottom-10 right-10 h-24 w-24 rounded-full blur-3xl" style={{ backgroundColor: `${end}44` }} />
+      <div className="absolute inset-4 rounded-[1.35rem] border border-white/10 bg-white/[0.025] transition duration-500 group-hover/project:scale-[1.02]" />
+      <div
+        className="absolute left-6 top-6 h-20 w-20 rounded-full blur-2xl transition duration-700 group-hover/project:scale-110 group-hover/project:opacity-100"
+        style={{ backgroundColor: `${start}66` }}
+      />
+      <div
+        className="absolute bottom-10 right-10 h-24 w-24 rounded-full blur-3xl transition duration-700 group-hover/project:translate-x-2 group-hover/project:-translate-y-2"
+        style={{ backgroundColor: `${end}44` }}
+      />
       <div className="absolute inset-0">
-        <div className="absolute left-[12%] top-[22%] h-[1px] w-[68%] rotate-[14deg] bg-white/20" />
-        <div className="absolute left-[16%] top-[54%] h-[1px] w-[54%] -rotate-[18deg] bg-white/15" />
-        <div className="absolute left-[32%] top-[18%] h-24 w-24 rounded-full border border-white/12" />
-        <div className="absolute right-[12%] top-[34%] h-16 w-16 rounded-full border border-white/10" />
-        <div className="absolute bottom-[18%] left-[18%] h-12 w-12 rounded-xl border border-white/10 bg-white/[0.04]" />
-        <div className="absolute bottom-[20%] right-[16%] h-20 w-20 rounded-[1.4rem] border border-white/10 bg-white/[0.035]" />
+        <div className="absolute left-[12%] top-[22%] h-[1px] w-[68%] rotate-[14deg] bg-white/20 transition duration-700 group-hover/project:translate-x-2 group-hover/project:opacity-80" />
+        <div className="absolute left-[16%] top-[54%] h-[1px] w-[54%] -rotate-[18deg] bg-white/15 transition duration-700 group-hover/project:-translate-x-2 group-hover/project:opacity-80" />
+        <div className="absolute left-[32%] top-[18%] h-24 w-24 rounded-full border border-white/12 transition duration-700 group-hover/project:scale-105" />
+        <div className="absolute right-[12%] top-[34%] h-16 w-16 rounded-full border border-white/10 transition duration-700 group-hover/project:-translate-y-1 group-hover/project:scale-110" />
+        <div className="absolute bottom-[18%] left-[18%] h-12 w-12 rounded-xl border border-white/10 bg-white/[0.04] transition duration-700 group-hover/project:-translate-y-1 group-hover/project:rotate-3" />
+        <div className="absolute bottom-[20%] right-[16%] h-20 w-20 rounded-[1.4rem] border border-white/10 bg-white/[0.035] transition duration-700 group-hover/project:translate-y-1 group-hover/project:-rotate-3" />
       </div>
     </div>
   );
@@ -77,10 +83,11 @@ export default function ProjectsSection({ projects, ui }) {
               delay={0.04 * index}
               className={project.featured ? 'md:col-span-2' : ''}
             >
-              <motion.article
-                className="panel h-full p-5 sm:p-6"
-                whileHover={{ y: -6 }}
-                transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+              <InteractiveSurface
+                as="article"
+                className="group/project panel h-full p-5 sm:p-6"
+                intensity={9}
+                lift={9}
               >
                 <div className={`grid gap-6 ${project.featured ? 'xl:grid-cols-[0.92fr_1.08fr]' : ''}`}>
                   <ProjectPreview accent={project.accent} />
@@ -100,11 +107,8 @@ export default function ProjectsSection({ projects, ui }) {
 
                     <div className="mt-5 flex flex-wrap gap-3">
                       {project.stack.map((item) => (
-                        <span
-                          key={item}
-                          className="rounded-full border border-white/10 bg-white/[0.045] px-3 py-1.5 text-sm text-mist"
-                        >
-                          {item}
+                        <span key={item} className="tag-chip px-3 py-1.5 text-sm">
+                          <span>{item}</span>
                         </span>
                       ))}
                     </div>
@@ -127,7 +131,7 @@ export default function ProjectsSection({ projects, ui }) {
                     </div>
                   </div>
                 </div>
-              </motion.article>
+              </InteractiveSurface>
             </Reveal>
           ))}
         </div>

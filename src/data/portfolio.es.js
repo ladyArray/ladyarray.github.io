@@ -19,7 +19,9 @@ export const portfolioEs = {
       }
     },
     hero: {
-      visualDirectionEyebrow: 'Dirección visual'
+      visualDirectionEyebrow: 'Dirección visual',
+      sceneLabel: 'Campo interactivo',
+      sceneHint: 'Recorre el hero con el cursor o pulsa para liberar un pulso en la órbita.'
     },
     sections: {
       about: 'Sobre mí',

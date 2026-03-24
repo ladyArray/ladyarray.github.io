@@ -1,6 +1,6 @@
-import { motion } from 'framer-motion';
 import Reveal from './Reveal';
 import SectionHeading from './SectionHeading';
+import InteractiveSurface from './InteractiveSurface';
 
 export default function SkillsSection({ skills, eyebrow }) {
   return (
@@ -19,10 +19,11 @@ export default function SkillsSection({ skills, eyebrow }) {
               delay={0.05 * index}
               className={group.featured ? 'md:col-span-2 xl:col-span-2' : ''}
             >
-              <motion.article
+              <InteractiveSurface
+                as="article"
                 className="panel h-full p-6 sm:p-7"
-                whileHover={{ y: -6 }}
-                transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                intensity={10}
+                lift={9}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>
@@ -38,15 +39,12 @@ export default function SkillsSection({ skills, eyebrow }) {
 
                 <div className="mt-6 flex flex-wrap gap-3">
                   {group.items.map((item) => (
-                    <span
-                      key={item}
-                      className="rounded-full border border-white/10 bg-white/[0.045] px-3 py-1.5 text-sm text-mist"
-                    >
-                      {item}
+                    <span key={item} className="tag-chip px-3 py-1.5 text-sm">
+                      <span>{item}</span>
                     </span>
                   ))}
                 </div>
-              </motion.article>
+              </InteractiveSurface>
             </Reveal>
           ))}
         </div>

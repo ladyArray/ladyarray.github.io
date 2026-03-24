@@ -1,4 +1,5 @@
-import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
+import { motion, useScroll, useSpring } from 'framer-motion';
 
 function LanguageToggle({ locale, onLocaleChange, ui }) {
   return (
@@ -49,9 +50,49 @@ function LanguageToggle({ locale, onLocaleChange, ui }) {
 }
 
 export default function Header({ items, locale, onLocaleChange, ui }) {
+  const [activeSection, setActiveSection] = useState('');
+  const { scrollYProgress } = useScroll();
+  const progressScale = useSpring(scrollYProgress, {
+    stiffness: 180,
+    damping: 28,
+    mass: 0.28
+  });
+
+  useEffect(() => {
+    const sections = items
+      .map((item) => document.querySelector(item.href))
+      .filter(Boolean);
+
+    if (!sections.length) {
+      return undefined;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visibleEntries = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((entryA, entryB) => entryB.intersectionRatio - entryA.intersectionRatio);
+
+        if (visibleEntries[0]) {
+          setActiveSection(`#${visibleEntries[0].target.id}`);
+        }
+      },
+      {
+        rootMargin: '-30% 0px -45% 0px',
+        threshold: [0.15, 0.3, 0.5, 0.75]
+      }
+    );
+
+    sections.forEach((section) => observer.observe(section));
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [items]);
+
   return (
     <header className="pointer-events-none fixed inset-x-0 top-0 z-40">
-      <div className="section-shell flex items-center justify-between py-5">
+      <div className="section-shell relative flex items-center justify-between py-5">
         <motion.a
           href="#top"
           className="pointer-events-auto inline-flex items-center gap-3 rounded-full border border-white/12 bg-white/[0.06] px-4 py-2 text-sm shadow-soft backdrop-blur-xl"
@@ -76,7 +117,8 @@ export default function Header({ items, locale, onLocaleChange, ui }) {
             <a
               key={item.href}
               href={item.href}
-              className="rounded-full px-4 py-2 text-sm text-mist transition duration-300 hover:bg-white/[0.06] hover:text-white"
+              data-active={activeSection === item.href}
+              className="nav-link"
             >
               {item.label}
             </a>
@@ -101,6 +143,13 @@ export default function Header({ items, locale, onLocaleChange, ui }) {
           >
             {ui.contactCta}
           </motion.a>
+        </div>
+
+        <div className="pointer-events-none absolute inset-x-4 bottom-0 hidden h-px overflow-hidden rounded-full bg-white/[0.08] lg:block">
+          <motion.div
+            className="h-full origin-left bg-[linear-gradient(90deg,rgba(136,102,255,0.2),rgba(125,226,255,0.95),rgba(55,168,255,0.2))] shadow-[0_0_18px_rgba(125,226,255,0.35)]"
+            style={{ scaleX: progressScale }}
+          />
         </div>
       </div>
     </header>
