@@ -2,57 +2,47 @@ import { motion } from 'framer-motion';
 
 function LanguageToggle({ locale, onLocaleChange, ui }) {
   return (
-    <div className="pointer-events-auto group relative overflow-hidden rounded-full border border-white/10 bg-[linear-gradient(135deg,rgba(10,15,30,0.94),rgba(12,18,36,0.9))] p-1.5 shadow-soft backdrop-blur-xl transition duration-300 hover:border-cobalt/20 hover:shadow-[0_18px_40px_rgba(16,28,66,0.38)]">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_50%,rgba(55,168,255,0.16),transparent_28%),radial-gradient(circle_at_82%_50%,rgba(193,139,255,0.16),transparent_28%)] transition duration-500 group-hover:opacity-100" />
-      <div className="absolute inset-[1px] rounded-full border border-white/[0.04] opacity-70 transition duration-300 group-hover:opacity-100" />
+    <div className="pointer-events-auto group relative overflow-hidden rounded-full border border-white/10 bg-[linear-gradient(135deg,rgba(10,15,30,0.96),rgba(12,18,36,0.92))] p-1 shadow-soft backdrop-blur-xl transition duration-300 hover:border-cobalt/20 hover:shadow-[0_18px_40px_rgba(16,28,66,0.34)]">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_50%,rgba(55,168,255,0.14),transparent_30%),radial-gradient(circle_at_80%_50%,rgba(193,139,255,0.14),transparent_30%)] opacity-90 transition duration-500 group-hover:opacity-100" />
+      <div className="absolute inset-[1px] rounded-full border border-white/[0.04]" />
 
-      <div className="relative flex items-center gap-2">
-        <div className="hidden items-center gap-2 rounded-full border border-white/8 bg-white/[0.035] px-2.5 py-1.5 sm:flex">
-          <span className="relative flex h-3 w-3 items-center justify-center">
-            <span className="absolute h-2 w-2 rounded-full bg-cobalt shadow-[0_0_16px_rgba(55,168,255,0.9)]" />
-            <span className="absolute h-4.5 w-4.5 rounded-full border border-cobalt/30" />
-          </span>
-          <span className="text-[10px] uppercase tracking-[0.28em] text-mist/65">{ui.label}</span>
-        </div>
+      <div className="relative grid grid-cols-2 gap-1 rounded-full bg-[#070b18]/85">
+        {ui.options.map((option) => {
+          const isActive = locale === option.value;
 
-        <div className="relative inline-grid grid-cols-2 gap-1 rounded-full border border-white/8 bg-[#070b18]/80 p-1">
-          {ui.options.map((option) => {
-            const isActive = locale === option.value;
-
-            return (
-              <button
+          return (
+            <button
               key={option.value}
               type="button"
               aria-pressed={isActive}
               aria-label={`${ui.label}: ${option.shortLabel}`}
               onClick={() => onLocaleChange(option.value)}
-              className="relative min-w-[3.5rem] overflow-hidden rounded-full px-3 py-2 text-xs font-medium uppercase tracking-[0.24em] outline-none transition duration-300 hover:-translate-y-[1px] focus-visible:-translate-y-[1px] focus-visible:shadow-[0_0_0_1px_rgba(125,226,255,0.35),0_0_0_6px_rgba(55,168,255,0.12)]"
+              className="relative w-[3.65rem] overflow-hidden rounded-full px-0 py-2 text-center text-[11px] font-medium uppercase tracking-[0.24em] outline-none transition duration-300 hover:-translate-y-[1px] focus-visible:-translate-y-[1px] focus-visible:shadow-[0_0_0_1px_rgba(125,226,255,0.35),0_0_0_6px_rgba(55,168,255,0.12)] sm:w-[3.85rem]"
             >
               {isActive ? (
                 <motion.span
                   layoutId="language-toggle-pill"
-                  className="absolute inset-0 overflow-hidden rounded-full border border-cobalt/30 bg-[linear-gradient(135deg,rgba(132,102,255,0.88),rgba(42,147,255,0.82))] shadow-[0_12px_30px_rgba(62,82,255,0.28)]"
+                  className="absolute inset-0 overflow-hidden rounded-full"
                   transition={{ type: 'spring', stiffness: 340, damping: 28 }}
                 >
-                  <span className="absolute inset-[1px] rounded-full bg-[linear-gradient(135deg,rgba(152,120,255,0.95),rgba(65,173,255,0.84))]" />
-                  <span className="absolute inset-x-4 top-[2px] h-[38%] rounded-full bg-[linear-gradient(180deg,rgba(255,255,255,0.3),rgba(255,255,255,0))]" />
-                  <span className="absolute left-3 top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full bg-white/95 shadow-[0_0_18px_rgba(255,255,255,0.95)]" />
-                  <span className="absolute left-2 top-1/2 h-4.5 w-4.5 -translate-y-1/2 rounded-full border border-white/20" />
-                  <span className="absolute right-2.5 top-1/2 h-[1px] w-3 -translate-y-1/2 bg-white/35" />
+                  <span className="absolute inset-0 rounded-full border border-cobalt/30 bg-[linear-gradient(135deg,rgba(132,102,255,0.9),rgba(42,147,255,0.84))] shadow-[0_12px_28px_rgba(62,82,255,0.28)]" />
+                  <span className="absolute inset-[1px] rounded-full bg-[linear-gradient(135deg,rgba(154,122,255,0.98),rgba(70,176,255,0.86))]" />
+                  <span className="absolute left-1/2 top-1/2 h-5 w-9 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/18 blur-md" />
+                  <span className="absolute inset-x-3 top-[2px] h-[42%] rounded-full bg-[linear-gradient(180deg,rgba(255,255,255,0.28),rgba(255,255,255,0))]" />
+                  <span className="absolute inset-x-4 bottom-[3px] h-[1px] rounded-full bg-white/18" />
                 </motion.span>
               ) : null}
 
               <span
-                className={`relative z-10 transition duration-300 ${
+                className={`relative z-10 block transition duration-300 ${
                   isActive ? 'text-white' : 'text-mist hover:text-white focus-visible:text-white'
                 }`}
               >
                 {option.shortLabel}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+              </span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
