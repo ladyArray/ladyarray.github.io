@@ -1,4 +1,54 @@
-export const portfolio = {
+import { portfolioEs } from './portfolio.es';
+
+export const supportedLocales = ['en', 'es'];
+export const defaultLocale = 'en';
+
+const languageOptions = [
+  { value: 'en', shortLabel: 'EN' },
+  { value: 'es', shortLabel: 'ES' }
+];
+
+const portfolioEn = {
+  meta: {
+    title: 'Regy | Front-End Developer',
+    description:
+      'Regy is a front-end developer shaping premium interfaces with SharePoint, React, TypeScript and immersive UI craft.'
+  },
+  ui: {
+    header: {
+      brandTagline: 'Front-End / SPFx',
+      contactCta: "Let's talk",
+      language: {
+        label: 'Language',
+        options: languageOptions
+      }
+    },
+    hero: {
+      visualDirectionEyebrow: 'Visual Direction'
+    },
+    sections: {
+      about: 'About',
+      skills: 'Capabilities',
+      value: 'Why Work With Me'
+    },
+    experience: {
+      eyebrow: 'Experience',
+      introEyebrow: 'What this translates into',
+      introStatement:
+        'Enterprise solidity, product sensitivity and the habit of shipping interfaces that make sense in the real world.'
+    },
+    projects: {
+      eyebrow: 'Selected Work',
+      roleLabel: 'Role',
+      repositoryLabel: 'Repository',
+      livePreviewLabel: 'Live preview',
+      noDemoLabel: 'No public demo yet'
+    },
+    contact: {
+      eyebrow: 'Contact',
+      replaceLabel: 'Replace'
+    }
+  },
   visualDirection: {
     label: 'Digital Observatory',
     statement:
@@ -361,7 +411,7 @@ export const portfolio = {
       },
       {
         mark: '04',
-        title: 'A frontend profile with range',
+        title: 'A front-end profile with range',
         copy: 'SharePoint is a strength, not a cage. I can move between enterprise platforms, modern React work and interface-heavy experiments.'
       }
     ]
@@ -378,20 +428,28 @@ export const portfolio = {
     ],
     links: [
       {
+        type: 'github',
         label: 'GitHub',
         value: 'github.com/ladyArray',
         href: 'https://github.com/ladyArray'
       },
       {
+        type: 'linkedin',
         label: 'LinkedIn',
         value: 'Regina Rodriguez',
         href: 'https://www.linkedin.com/in/regina-rodriguez-sharepoint-developer/'
       },
       {
+        type: 'email',
         label: 'Email',
         value: 'Add your professional email here',
         href: null
       }
     ]
   }
+};
+
+export const portfolio = {
+  en: portfolioEn,
+  es: portfolioEs
 };

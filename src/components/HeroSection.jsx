@@ -16,7 +16,7 @@ function SceneFallback() {
   );
 }
 
-export default function HeroSection({ hero, visualDirection }) {
+export default function HeroSection({ hero, visualDirection, ui }) {
   return (
     <section id="top" className="relative overflow-hidden pb-20 pt-28 sm:pb-28 sm:pt-32 lg:pb-36 lg:pt-36">
       <div className="section-shell">
@@ -96,7 +96,7 @@ export default function HeroSection({ hero, visualDirection }) {
           <div className="panel overflow-hidden p-6 sm:p-8">
             <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
               <div>
-                <p className="section-kicker">Visual Direction</p>
+                <p className="section-kicker">{ui.visualDirectionEyebrow}</p>
                 <p className="mt-5 max-w-xl text-lg leading-8 text-white">{visualDirection.statement}</p>
               </div>
               <div className="grid gap-4 sm:grid-cols-3">

@@ -2,12 +2,12 @@ import { ArrowUpRight, GitBranch, Link2, Mail } from 'lucide-react';
 import Reveal from './Reveal';
 
 const iconMap = {
-  GitHub: GitBranch,
-  LinkedIn: Link2,
-  Email: Mail
+  github: GitBranch,
+  linkedin: Link2,
+  email: Mail
 };
 
-export default function ContactSection({ contact }) {
+export default function ContactSection({ contact, ui }) {
   return (
     <section id="contact" className="section-space pb-24 sm:pb-28">
       <div className="section-shell">
@@ -16,7 +16,7 @@ export default function ContactSection({ contact }) {
 
           <div className="relative grid gap-10 xl:grid-cols-[1.02fr_0.98fr] xl:items-end">
             <div>
-              <p className="section-kicker">Contact</p>
+              <p className="section-kicker">{ui.eyebrow}</p>
               <h2 className="mt-5 max-w-2xl font-display text-4xl leading-tight text-white sm:text-5xl lg:text-[4rem]">
                 {contact.title}
               </h2>
@@ -35,12 +35,12 @@ export default function ContactSection({ contact }) {
 
             <div className="grid gap-4">
               {contact.links.map((link) => {
-                const Icon = iconMap[link.label];
+                const Icon = iconMap[link.type];
 
                 if (!link.href) {
                   return (
                     <div
-                      key={link.label}
+                      key={link.type}
                       className="rounded-[1.5rem] border border-dashed border-white/12 bg-white/[0.03] p-5 text-mist/75"
                     >
                       <div className="flex items-start justify-between gap-4">
@@ -54,7 +54,7 @@ export default function ContactSection({ contact }) {
                           </div>
                         </div>
                         <span className="rounded-full border border-white/10 px-3 py-1 text-xs uppercase tracking-[0.22em] text-mist/70">
-                          Replace
+                          {ui.replaceLabel}
                         </span>
                       </div>
                     </div>
@@ -63,7 +63,7 @@ export default function ContactSection({ contact }) {
 
                 return (
                   <a
-                    key={link.label}
+                    key={link.type}
                     href={link.href}
                     target="_blank"
                     rel="noreferrer"

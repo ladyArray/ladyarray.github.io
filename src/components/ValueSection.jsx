@@ -1,11 +1,11 @@
 import Reveal from './Reveal';
 import SectionHeading from './SectionHeading';
 
-export default function ValueSection({ values }) {
+export default function ValueSection({ values, eyebrow }) {
   return (
     <section id="value" className="section-space">
       <div className="section-shell">
-        <SectionHeading eyebrow="Why Work With Me" title={values.title} description={values.description} />
+        <SectionHeading eyebrow={eyebrow} title={values.title} description={values.description} />
 
         <div className="mt-12 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
           {values.items.map((item, index) => (

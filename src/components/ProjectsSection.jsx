@@ -60,12 +60,12 @@ function ProjectLink({ href, icon, children, muted = false }) {
   );
 }
 
-export default function ProjectsSection({ projects }) {
+export default function ProjectsSection({ projects, ui }) {
   return (
     <section id="projects" className="section-space">
       <div className="section-shell">
         <SectionHeading
-          eyebrow="Selected Work"
+          eyebrow={ui.eyebrow}
           title={projects.title}
           description={projects.description}
         />
@@ -110,19 +110,19 @@ export default function ProjectsSection({ projects }) {
                     </div>
 
                     <p className="mt-6 text-sm leading-7 text-mist/80">
-                      <span className="text-white">Role:</span> {project.role}
+                      <span className="text-white">{ui.roleLabel}:</span> {project.role}
                     </p>
 
                     <div className="mt-7 flex flex-wrap gap-3">
                       <ProjectLink href={project.links.repo} icon={<GitBranch className="h-4 w-4" />}>
-                        Repository
+                        {ui.repositoryLabel}
                       </ProjectLink>
                       <ProjectLink
                         href={project.links.demo}
                         icon={<ArrowUpRight className="h-4 w-4" />}
                         muted
                       >
-                        {project.links.demo ? 'Live preview' : 'No public demo yet'}
+                        {project.links.demo ? ui.livePreviewLabel : ui.noDemoLabel}
                       </ProjectLink>
                     </div>
                   </div>

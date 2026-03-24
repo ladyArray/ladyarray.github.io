@@ -1,21 +1,21 @@
 import Reveal from './Reveal';
 import SectionHeading from './SectionHeading';
 
-export default function ExperienceSection({ experience }) {
+export default function ExperienceSection({ experience, ui }) {
   return (
     <section id="experience" className="section-space">
       <div className="section-shell">
         <SectionHeading
-          eyebrow="Experience"
+          eyebrow={ui.eyebrow}
           title={experience.title}
           description={experience.description}
         />
 
         <div className="mt-12 grid gap-6 xl:grid-cols-[0.84fr_1.16fr]">
           <Reveal className="panel p-7 sm:p-9">
-            <p className="section-kicker">What this translates into</p>
+            <p className="section-kicker">{ui.introEyebrow}</p>
             <p className="mt-5 max-w-xl font-display text-2xl leading-tight text-white sm:text-[2rem]">
-              Enterprise solidity, product sensitivity and the habit of shipping interfaces that make sense in the real world.
+              {ui.introStatement}
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               {experience.signals.map((signal) => (

@@ -2,12 +2,12 @@ import { motion } from 'framer-motion';
 import Reveal from './Reveal';
 import SectionHeading from './SectionHeading';
 
-export default function SkillsSection({ skills }) {
+export default function SkillsSection({ skills, eyebrow }) {
   return (
     <section id="skills" className="section-space">
       <div className="section-shell">
         <SectionHeading
-          eyebrow="Capabilities"
+          eyebrow={eyebrow}
           title={skills.title}
           description={skills.description}
         />

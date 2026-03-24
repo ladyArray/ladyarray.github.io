@@ -1,12 +1,12 @@
 import Reveal from './Reveal';
 import SectionHeading from './SectionHeading';
 
-export default function AboutSection({ about }) {
+export default function AboutSection({ about, eyebrow }) {
   return (
     <section id="about" className="section-space">
       <div className="section-shell">
         <SectionHeading
-          eyebrow="About"
+          eyebrow={eyebrow}
           title={about.title}
           description={about.description}
         />
