@@ -1,6 +1,9 @@
+import { Suspense, lazy } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
 import Reveal from './Reveal';
+
+const SceneCanvas = lazy(() => import('./SceneCanvas'));
 
 function SceneFallback() {
   return (
@@ -64,7 +67,9 @@ export default function HeroSection({ hero, visualDirection }) {
             <div className="panel min-h-[32rem] p-4 sm:p-5">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(120,114,255,0.18),transparent_45%),linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0))]" />
               <div className="relative h-[20rem] overflow-hidden rounded-[1.7rem] border border-white/10 bg-[linear-gradient(180deg,rgba(11,18,38,0.96),rgba(7,11,24,0.86))] shadow-glow sm:h-[23rem]">
-                <SceneFallback />
+                <Suspense fallback={<SceneFallback />}>
+                  <SceneCanvas />
+                </Suspense>
               </div>
 
               <div className="relative mt-4 grid gap-3 sm:grid-cols-2">
