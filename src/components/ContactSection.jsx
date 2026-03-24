@@ -36,6 +36,7 @@ export default function ContactSection({ contact, ui }) {
             <div className="grid gap-4">
               {contact.links.map((link) => {
                 const Icon = iconMap[link.type];
+                const isMailLink = link.href?.startsWith('mailto:');
 
                 if (!link.href) {
                   return (
@@ -65,8 +66,8 @@ export default function ContactSection({ contact, ui }) {
                   <a
                     key={link.type}
                     href={link.href}
-                    target="_blank"
-                    rel="noreferrer"
+                    target={isMailLink ? undefined : '_blank'}
+                    rel={isMailLink ? undefined : 'noreferrer'}
                     className="group rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-5 transition duration-300 hover:-translate-y-1 hover:border-cobalt/30 hover:bg-white/[0.055]"
                   >
                     <div className="flex items-start justify-between gap-4">
