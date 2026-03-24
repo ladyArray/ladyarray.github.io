@@ -12,11 +12,11 @@ const portfolioEn = {
   meta: {
     title: 'Regy | Front-End Developer',
     description:
-      'Regy is a front-end developer shaping premium interfaces with SharePoint, React, TypeScript and immersive UI craft.'
+      'Front-end developer with SharePoint Online, SPFx, React, TypeScript and Power Platform experience, focused on polished UI and real enterprise delivery.'
   },
   ui: {
     header: {
-      brandTagline: 'Front-End / SPFx',
+      brandTagline: 'Front-End / SharePoint',
       contactCta: "Let's talk",
       language: {
         label: 'Language',
@@ -35,7 +35,7 @@ const portfolioEn = {
       eyebrow: 'Experience',
       introEyebrow: 'What this translates into',
       introStatement:
-        'Enterprise solidity, product sensitivity and the habit of shipping interfaces that make sense in the real world.'
+        'SharePoint depth, product sensitivity and delivery habits shaped by real enterprise projects.'
     },
     projects: {
       eyebrow: 'Selected Work',
@@ -64,17 +64,17 @@ const portfolioEn = {
   ],
   hero: {
     name: 'Regy',
-    title: 'Front-end systems with visual gravity.',
+    title: 'Front-end systems with enterprise depth and visual intent.',
     subtitle:
-      'SharePoint depth, React craft and motion-led detail for interfaces that need to feel premium, clear and production-ready.',
+      'SharePoint Online, SPFx, React and TypeScript used to build interfaces that feel modern, structured and ready for real business environments.',
     description:
-      'I design and build polished digital experiences across Microsoft 365 environments and modern front-end stacks, balancing technical structure, interaction quality and a strong eye for visual composition.',
+      'My strongest base is in SharePoint and Microsoft 365, but my work goes further: Power Platform, Azure-connected flows, polished UI, responsive front-end architecture and a real interest in how digital products look, move and communicate.',
     primaryCta: {
-      label: 'View selected work',
+      label: 'Explore selected work',
       href: '#projects'
     },
     secondaryCta: {
-      label: 'Start a conversation',
+      label: 'Get in touch',
       href: '#contact'
     },
     highlights: [
@@ -82,72 +82,72 @@ const portfolioEn = {
       'SPFx',
       'React',
       'TypeScript',
-      'Microsoft Graph',
+      'Power Platform',
       'UI-focused development'
     ],
     metrics: [
       {
-        label: 'Enterprise depth',
-        value: 'SharePoint Online, SPFx and integration-heavy delivery.'
+        label: 'Enterprise delivery',
+        value: 'SharePoint modernization, Microsoft 365 ecosystems and business-facing solutions.'
       },
       {
-        label: 'Visual intent',
-        value: 'Motion, rhythm and detail without sacrificing clarity.'
+        label: 'Front-end craft',
+        value: 'Responsive UI, component structure and interaction detail that stays maintainable.'
       },
       {
-        label: 'Frontend range',
-        value: 'From Microsoft ecosystems to modern product-style interfaces.'
+        label: 'Integrations',
+        value: 'Power Platform, Microsoft Graph, Azure Functions and scripting around real workflows.'
       },
       {
-        label: 'Practical craft',
-        value: 'Component architecture, responsive UI and maintainable implementation.'
+        label: 'Collaboration',
+        value: 'Technical docs, POCs, client presentations and agile teamwork.'
       }
     ],
     orbit: [
       {
         title: 'Structure',
-        copy: 'Reusable UI, scalable components and real-world delivery discipline.'
+        copy: 'Component thinking, maintainable code and enterprise-ready implementation.'
       },
       {
-        title: 'Motion',
-        copy: 'Transitions and microinteractions used to guide attention, not distract from it.'
+        title: 'Experience',
+        copy: 'Projects shaped by migrations, governance, real users and business context.'
       },
       {
-        title: 'Depth',
-        copy: 'SharePoint expertise as a differentiator, without narrowing the overall front-end positioning.'
+        title: 'Expression',
+        copy: 'Visual care, motion and rhythm used to make interfaces clearer and more memorable.'
       }
     ]
   },
   about: {
-    title: 'Enterprise experience, frontend ambition and a careful visual eye.',
+    title: 'SharePoint depth, front-end range and a clear product mindset.',
     description:
-      'My background is strongly grounded in SharePoint Online, SPFx, React and TypeScript, but the way I approach products is wider than a single ecosystem. I care about interface quality, visual precision and building experiences that feel intentional from first glance to final interaction.',
+      'I have been building SharePoint Online solutions since 2022, first at Hiberus and now at Sogeti, working with SPFx, React, TypeScript and PnPjs in projects where usability, integration and business context all matter. At the same time, I keep pushing my front-end work beyond that ecosystem through React, Angular and Vue projects with a stronger visual and product-oriented layer.',
     pullQuote:
-      'I like products that look composed, behave clearly and still hold up inside complex technical environments.',
+      'I want to build interfaces that stay solid inside complex environments without giving up clarity, rhythm or visual care.',
     body:
-      'That combination is what I bring to the table: I can work comfortably with enterprise constraints, integrations, documentation and client-facing delivery, while still pushing the interface toward something cleaner, sharper and more memorable than expected.',
+      'That is where I feel most useful: moving comfortably between enterprise constraints, client-facing delivery, documentation and technical structure, while still caring about responsive layouts, interaction quality and how polished the final experience feels. SharePoint is one of my strongest differentiators, but not the limit of how I work as a front-end developer.',
     highlights: [
       {
         label: '01',
-        title: 'Real-world delivery',
-        copy: 'SharePoint and Microsoft 365 work has trained me to design for complexity, not only for ideal conditions.'
+        title: 'Enterprise modernization',
+        copy: 'I work on SharePoint Online projects that often sit after on-premise migrations, so I am used to modernizing solutions without losing sight of business reality.'
       },
       {
         label: '02',
-        title: 'SharePoint as leverage',
-        copy: 'It is one of my strongest differentiators, especially when a project needs structure, integration and business context.'
+        title: 'SharePoint plus integrations',
+        copy: 'My day-to-day includes SPFx web parts, extensions and Form Customizers, plus Power Platform, Azure Automation, Azure Functions, Microsoft Graph and PowerShell / PnP workflows.'
       },
       {
         label: '03',
-        title: 'UI with intention',
-        copy: 'I am interested in the space where interface, interaction and technical quality reinforce each other.'
+        title: 'Front-end range',
+        copy: 'My background also includes React, Angular and Vue projects, mobile-first builds, Firebase and Netlify, which keeps my front-end thinking wider than a single platform.'
       }
     ]
   },
   skills: {
-    title: 'Capabilities shaped for enterprise reality and modern interface work.',
+    title: 'Capabilities shaped by SharePoint delivery and a wider front-end practice.',
     description:
-      'The goal is not only to know tools, but to combine them with enough design sensitivity and implementation discipline to make the final experience feel coherent.',
+      'The value is not only knowing tools, but being able to combine them into solutions that are maintainable, visually careful and realistic for business environments.',
     groups: [
       {
         label: 'Core',
@@ -155,16 +155,16 @@ const portfolioEn = {
         mark: 'FE',
         featured: true,
         copy:
-          'The layer where I am most at home: building clean, responsive and maintainable UI with solid component thinking and attention to layout, states and interaction flow.',
+          'The layer where I feel most at home: building clean, responsive and maintainable UI with strong component thinking, from React-heavy work to Angular and Vue foundations.',
         items: [
           'React',
           'TypeScript',
           'JavaScript',
           'HTML5',
           'CSS3 / SCSS',
-          'Responsive design',
-          'Component architecture',
-          'UI development'
+          'Angular',
+          'Vue.js',
+          'Responsive design'
         ]
       },
       {
@@ -176,7 +176,7 @@ const portfolioEn = {
         items: [
           'SharePoint Online',
           'SPFx',
-          'Microsoft Graph',
+          'Microsoft 365',
           'Fluent UI',
           'PnPjs',
           'PowerShell'
@@ -187,14 +187,15 @@ const portfolioEn = {
         title: 'Cloud & Integrations',
         mark: 'CL',
         copy:
-          'Useful when solutions need to move beyond the interface and connect with automation, backend services or lightweight cloud workflows.',
+          'Useful when a solution needs to move beyond the interface and connect with automation, backend services or cloud workflows.',
         items: [
+          'Microsoft Graph',
           'Azure Functions',
           'Power Automate',
           'Power Apps',
-          'API integrations',
+          '.NET / C#',
           'Firebase',
-          'Netlify'
+          'API integrations'
         ]
       },
       {
@@ -202,12 +203,12 @@ const portfolioEn = {
         title: 'UI / Motion / Experience',
         mark: 'UX',
         copy:
-          'A product-minded layer focused on motion, clarity and finish, so interfaces feel considered rather than merely functional.',
+          'A product-minded layer focused on clarity, motion and finish, so interfaces feel considered rather than merely functional.',
         items: [
           'Motion-based UI',
           'Interactive interfaces',
-          'Visual rhythm',
           'Microinteractions',
+          'Visual hierarchy',
           'Accessibility-aware UI',
           'Premium responsive execution'
         ]
@@ -219,74 +220,80 @@ const portfolioEn = {
         copy:
           'The behind-the-scenes work that keeps projects viable: demos, documentation, agile collaboration and communication with technical and non-technical stakeholders.',
         items: [
-          'Agile environments',
+          'Azure DevOps',
+          'Agile delivery',
           'Technical documentation',
           'Functional documentation',
           'Client presentations',
-          'Version control',
           'Maintainable structure'
         ]
       }
     ]
   },
   experience: {
-    title: 'A trajectory built between enterprise systems and interface quality.',
+    title: 'A trajectory built through real delivery, not only demos.',
     description:
-      'My experience combines implementation work, stakeholder-facing delivery and the ability to keep interfaces readable even when the surrounding ecosystem is anything but simple.',
+      'From front-end training and product-style builds to SharePoint delivery inside enterprise teams, my path has grown around practical implementation, integrations and interfaces that need to work for real users.',
     signals: [
-      'SharePoint Online development',
-      'SPFx web parts and extensions',
-      'React + TypeScript interfaces',
-      'Microsoft Graph and Azure integrations',
-      'Power Platform workflows',
-      'Client communication and agile delivery'
+      'SharePoint modernization',
+      'SPFx web parts, extensions and Form Customizers',
+      'React, TypeScript, SCSS and Fluent UI',
+      'Power Platform, Microsoft Graph and Azure Functions',
+      'PowerShell and PnP automation',
+      'Documentation, POCs, client presentations and agile delivery'
     ],
     stages: [
       {
         step: '01',
-        label: 'Enterprise UI',
-        title: 'SharePoint solutions with real business weight.',
+        label: 'Sogeti | 2025 - Present',
+        title: 'Power Platform & SharePoint Developer',
         copy:
-          'I have worked on SharePoint Online and SPFx solutions where business rules, content structure, governance and usability all matter at the same time.',
+          'Building modern SharePoint Online solutions after on-premise migrations, with SPFx web parts, extensions and Form Customizers in React and TypeScript, plus integrations with Power Platform, Azure Automation and Azure Functions. The role also includes PowerShell and PnP scripting, technical and functional documentation, POCs and client presentations.',
         items: [
-          'Custom web parts',
-          'Application customizers',
-          'Microsoft 365 ecosystems',
-          'Documentation and handoff'
+          'SPFx web parts',
+          'Extensions & Form Customizers',
+          'React + TypeScript + Fluent UI',
+          'Power Platform',
+          'Azure Automation & Functions',
+          'PowerShell / PnP'
         ]
       },
       {
         step: '02',
-        label: 'Frontend Craft',
-        title: 'React interfaces that stay maintainable as they grow.',
+        label: 'Hiberus | 2022 - 2025',
+        title: 'SharePoint Developer',
         copy:
-          'Beyond the Microsoft layer, I focus on reusable UI, responsive behavior, strong state handling and layouts that feel deliberate instead of improvised.',
+          'Worked on SharePoint Online delivery and on-premise support, building SPFx solutions with React, TypeScript and PnPjs, integrating .NET APIs and taking care of SCSS-based UI implementation, code quality and day-to-day collaboration through Azure DevOps and agile workflows.',
         items: [
-          'React',
-          'TypeScript',
-          'Component systems',
-          'Interaction-focused implementation'
+          'SharePoint Online + on-premise',
+          'SPFx + React',
+          'TypeScript + PnPjs',
+          '.NET API integrations',
+          'SCSS / CSS Modules',
+          'Azure DevOps'
         ]
       },
       {
         step: '03',
-        label: 'Automation & Integration',
-        title: 'Comfortable across flows, APIs and ecosystem boundaries.',
+        label: 'Front-End Foundation | 2022',
+        title: 'UI-focused training and product builds',
         copy:
-          'I can move between interface work and surrounding services when a project needs integration thinking, automation or cloud-aware architecture.',
+          'Through the Hiberus University front-end program and projects like Pitayapp, I worked with Vue, Angular and React, building mobile-first interfaces, MVP-oriented flows and accessible layouts connected to tools like Firebase and Netlify.',
         items: [
-          'Microsoft Graph',
-          'Azure Functions',
-          'Power Automate',
-          'Power Apps'
+          'Vue, Angular and React',
+          'HTML5 / SCSS / JavaScript',
+          'Firebase / Netlify',
+          'Mobile-first UI',
+          'Accessibility',
+          'Agile teamwork'
         ]
       }
     ]
   },
   projects: {
-    title: 'Selected projects that show breadth, not just one lane.',
+    title: 'Selected work across SharePoint, product UI and growth through shipping.',
     description:
-      'SharePoint remains one of my clearest strengths, but this selection is arranged to show range: enterprise delivery, UI sensitivity, cross-platform thinking and early-stage architectural work.',
+      'This mix is arranged to show what I actually bring: strong SharePoint capability, broader front-end curiosity and projects that reveal how I think about structure, UX and technical evolution across different stacks.',
     items: [
       {
         title: 'GameDirectory',
@@ -294,9 +301,9 @@ const portfolioEn = {
         status: 'Flagship build',
         featured: true,
         description:
-          'A content-rich SharePoint experience that turns a games catalogue into a curated directory with filters, details panels, file management, exports and a knowledge-assistant extension layered into the site.',
-        stack: ['SPFx', 'React', 'TypeScript', 'Fluent UI', 'PowerShell'],
-        role: 'Architecture, UI development, data modelling and experience design inside SharePoint.',
+          'A SharePoint Online directory experience built with SPFx and React, centered on structured content, filtering, detail views and a more curated, app-like interaction model inside Microsoft 365.',
+        stack: ['SPFx', 'React', 'TypeScript', 'Fluent UI', 'PnPjs'],
+        role: 'SPFx architecture, React UI, data modelling and experience design.',
         links: {
           repo: 'https://github.com/ladyArray/GameDirectory',
           demo: null
@@ -304,12 +311,54 @@ const portfolioEn = {
         accent: ['#8967ff', '#3cb8ff']
       },
       {
+        title: 'meet-manager',
+        category: 'SharePoint / Teams',
+        status: 'Microsoft 365 flow',
+        description:
+          'An SPFx project for meeting-related management flows, built with React, Fluent UI, PnPjs and client-side routing for a more application-like Microsoft 365 experience.',
+        stack: ['SPFx', 'React', 'TypeScript', 'Fluent UI', 'PnPjs', 'Teams'],
+        role: 'SPFx structure, React UI and Microsoft 365-focused interaction design.',
+        links: {
+          repo: 'https://github.com/ladyArray/meet-manager',
+          demo: null
+        },
+        accent: ['#7080ff', '#78d8ff']
+      },
+      {
+        title: 'staticWebAppAzure / ReleasePilot',
+        category: 'Modern front-end',
+        status: 'Azure-ready front-end',
+        description:
+          'A release-tracking dashboard built with React, TypeScript and Vite for Azure Static Web Apps, structured to show typed data, routing, filters and a cleaner deployment story.',
+        stack: ['React', 'TypeScript', 'Vite', 'React Router', 'Azure Static Web Apps'],
+        role: 'Front-end architecture, dashboard UI and Azure-oriented deployment setup.',
+        links: {
+          repo: 'https://github.com/ladyArray/staticWebAppAzure',
+          demo: null
+        },
+        accent: ['#5a7dff', '#59d7ff']
+      },
+      {
+        title: 'Pitayapp-web',
+        category: 'Front-end product',
+        status: 'Collaborative build',
+        description:
+          'A collaborative front-end project built around a mobile-first experience, starting with vanilla JavaScript and Swiper on the landing and moving into a Vue-based main site with Firebase-backed flows and Netlify deployment.',
+        stack: ['Vue 3', 'Vite', 'SCSS', 'Firebase', 'Swiper', 'Netlify'],
+        role: 'Front-end architecture, landing implementation, Vue migration and responsive UI.',
+        links: {
+          repo: 'https://github.com/Pitayapp/Pitayapp-web',
+          demo: null
+        },
+        accent: ['#8b6dff', '#57e4c7']
+      },
+      {
         title: 'JigsawApp',
         category: 'Mobile UI',
         status: 'Visual build',
         description:
-          'A custom jigsaw puzzle application for Android with tailored layouts, puzzle views and a more expressive visual treatment than a typical utility-style app.',
-        stack: ['.NET for Android', 'C#', 'Android XML', 'Custom drawing', 'Material UI'],
+          'An Android jigsaw puzzle app built in C#, with custom drawing, puzzle views and a more tailored interaction layer than a standard utility interface.',
+        stack: ['C#', '.NET for Android', 'Android XML', 'Custom drawing', 'Material UI'],
         role: 'App structure, interaction flow and visual styling.',
         links: {
           repo: 'https://github.com/ladyArray/JigsawApp',
@@ -322,7 +371,7 @@ const portfolioEn = {
         category: 'Cross-platform app',
         status: 'TFG DAM',
         description:
-          'A fitness class booking concept built as a DAM final project, covering schedules, reservations, user flows and multi-platform UI with .NET MAUI.',
+          'A DAM final project focused on fitness class booking, schedules and reservations, built as a cross-platform app with .NET MAUI and a clear user-flow mindset.',
         stack: ['.NET MAUI', 'C#', 'XAML', 'SQLite', 'Cross-platform UI'],
         role: 'Product concept, reservation UX and app implementation.',
         links: {
@@ -332,25 +381,25 @@ const portfolioEn = {
         accent: ['#69a6ff', '#6df3d3']
       },
       {
-        title: 'staticWebAppAzure / ReleasePilot',
-        category: 'Modern front-end',
-        status: 'Azure-ready',
+        title: 'perret.es',
+        category: 'Angular front-end',
+        status: 'Content-driven build',
         description:
-          'A React + TypeScript dashboard designed for Azure Static Web Apps, with typed data, routing, release metrics and a deployment-aware frontend structure.',
-        stack: ['React', 'TypeScript', 'Vite', 'React Router', 'Azure Static Web Apps'],
-        role: 'UI architecture, dashboard composition and deployment setup.',
+          'An Angular project exploring routed views, component structure and a polished visual layer using Bootstrap as a base with custom styling on top.',
+        stack: ['Angular', 'TypeScript', 'Bootstrap', 'HTML', 'CSS'],
+        role: 'Front-end implementation and component-based page structure.',
         links: {
-          repo: 'https://github.com/ladyArray/staticWebAppAzure',
+          repo: 'https://github.com/ladyArray/perret.es',
           demo: null
         },
-        accent: ['#5a7dff', '#59d7ff']
+        accent: ['#7487ff', '#ffc28a']
       },
       {
         title: 'superswitches',
         category: 'Full-stack build',
         status: 'TFG DAW',
         description:
-          'A DAW final project combining a PHP application layer with a modern Vite-based frontend workflow, showing a broader full-stack delivery mindset.',
+          'A DAW final project that combines a PHP application layer with a Vite-driven frontend workflow, showing an early full-stack mindset and interface structuring beyond simple static pages.',
         stack: ['PHP', 'JavaScript', 'Vite', 'SCSS', 'Apache'],
         role: 'Full-stack implementation and interface structure.',
         links: {
@@ -360,29 +409,29 @@ const portfolioEn = {
         accent: ['#9a73ff', '#ffc16d']
       },
       {
-        title: 'webapp',
-        category: 'Architecture foundation',
-        status: 'In build',
+        title: 'WebApp / ServiceDesk API',
+        category: 'Backend architecture',
+        status: 'ServiceDesk API',
         description:
-          'A lightweight front-end repository kept separate from the service layer, ready to evolve into a decoupled application without mixing UI and backend concerns.',
-        stack: ['Client shell', 'Repo split', 'Scaffold', 'Future UI lane'],
-        role: 'Structure-first repository setup.',
+          'A layered ASP.NET Core Web API for support ticket management, organised around domain, application, infrastructure and tests to show maintainable architecture beyond the UI layer.',
+        stack: ['ASP.NET Core', '.NET 9', 'C#', 'EF Core', 'SQLite', 'Swagger'],
+        role: 'Architecture, API design, documentation and testing groundwork.',
         links: {
-          repo: 'https://github.com/ladyArray/webapp',
+          repo: 'https://github.com/ladyArray/WebApp',
           demo: null
         },
         accent: ['#5766ff', '#a7b4ff']
       },
       {
-        title: 'webapi',
-        category: 'Service foundation',
-        status: 'In build',
+        title: 'WebApi',
+        category: 'API sandbox',
+        status: 'Early foundation',
         description:
-          'Companion API groundwork intended to support a cleaner application split, integration experiments and service-oriented evolution as projects mature.',
-        stack: ['API layer', 'Decoupled architecture', 'Integration-ready', 'Backend slot'],
-        role: 'Service-layer repository foundation.',
+          'An initial repository kept as a lightweight sandbox for service-layer experimentation and decoupled application planning.',
+        stack: ['C#', 'API exploration', 'Repository setup', 'Service planning'],
+        role: 'Backend structure exploration.',
         links: {
-          repo: 'https://github.com/ladyArray/webapi',
+          repo: 'https://github.com/ladyArray/WebApi',
           demo: null
         },
         accent: ['#5d74ff', '#87d5ff']
@@ -390,48 +439,48 @@ const portfolioEn = {
     ]
   },
   values: {
-    title: 'A profile that connects technical structure with visual judgement.',
+    title: 'What I bring is technical reliability with a strong interface sensibility.',
     description:
-      'The value I bring is not just writing code. It is being able to shape interfaces that hold up under real constraints while still feeling polished, intentional and contemporary.',
+      'I am at my best when a project needs both structure and care: clean implementation, business awareness and an interface that still feels considered.',
     items: [
       {
         mark: '01',
-        title: 'Technical structure with design awareness',
-        copy: 'I care about systems, naming, maintainability and delivery quality, but also about how the interface lands emotionally and visually.'
+        title: 'SharePoint expertise without tunnel vision',
+        copy: 'I can add real value in Microsoft 365 environments, especially with SharePoint Online and SPFx, while still positioning myself as a broader front-end developer.'
       },
       {
         mark: '02',
-        title: 'Enterprise reality without losing product sensitivity',
-        copy: 'SharePoint work has given me resilience around business context, integrations and stakeholder complexity without flattening the UI ambition.'
+        title: 'UI care backed by implementation discipline',
+        copy: 'I pay attention to hierarchy, motion, responsiveness and polish, but I also care about component structure, maintainability and accessibility.'
       },
       {
         mark: '03',
-        title: 'Modern interfaces with discipline',
-        copy: 'I aim for clarity, rhythm and sharp interaction detail rather than effects for the sake of effects.'
+        title: 'Comfortable with integrations and delivery',
+        copy: 'Power Platform, Azure Functions, Microsoft Graph, PowerShell, documentation and client presentations are already part of how I work.'
       },
       {
         mark: '04',
-        title: 'A front-end profile with range',
-        copy: 'SharePoint is a strength, not a cage. I can move between enterprise platforms, modern React work and interface-heavy experiments.'
+        title: 'A profile that keeps expanding',
+        copy: 'React is central, but my background with Angular, Vue, .NET and mobile-oriented builds gives me wider perspective when shaping interfaces and products.'
       }
     ]
   },
   contact: {
-    title: 'Open to front-end, SPFx and UI-focused opportunities.',
+    title: 'Open to front-end, SharePoint and UI-focused opportunities.',
     description:
-      'If you are looking for someone who can work inside real product constraints and still care deeply about the experience layer, I would love to connect.',
+      'I am currently working as a Power Platform & SharePoint Developer at Sogeti. If you need someone who can combine enterprise reliability, SharePoint depth and a sharper front-end eye, I would be glad to connect.',
     availability: [
-      'Recruiter conversations',
       'Front-end roles',
-      'SPFx / SharePoint projects',
+      'SharePoint / SPFx',
+      'Power Platform',
       'UI-focused delivery'
     ],
     links: [
       {
-        type: 'github',
-        label: 'GitHub',
-        value: 'github.com/ladyArray',
-        href: 'https://github.com/ladyArray'
+        type: 'email',
+        label: 'Email',
+        value: 'regina.rguez.c@gmail.com',
+        href: 'mailto:regina.rguez.c@gmail.com'
       },
       {
         type: 'linkedin',
@@ -440,10 +489,10 @@ const portfolioEn = {
         href: 'https://www.linkedin.com/in/regina-rodriguez-sharepoint-developer/'
       },
       {
-        type: 'email',
-        label: 'Email',
-        value: 'Add your professional email here',
-        href: null
+        type: 'github',
+        label: 'GitHub',
+        value: 'github.com/ladyArray',
+        href: 'https://github.com/ladyArray'
       }
     ]
   }
