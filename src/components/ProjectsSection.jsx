@@ -117,6 +117,13 @@ export default function ProjectsSection({ projects, ui }) {
                       <span className="text-white">{ui.roleLabel}:</span> {project.role}
                     </p>
 
+                    {project.impact ? (
+                      <div className="mt-6 rounded-[1.3rem] border border-white/10 bg-white/[0.035] p-4">
+                        <p className="text-[11px] uppercase tracking-[0.24em] text-cobalt/90">{ui.impactLabel}</p>
+                        <p className="mt-3 text-sm leading-7 text-mist">{project.impact}</p>
+                      </div>
+                    ) : null}
+
                     <div className="mt-7 flex flex-wrap gap-3">
                       <ProjectLink href={project.links.repo} icon={<GitBranch className="h-4 w-4" />}>
                         {ui.repositoryLabel}
