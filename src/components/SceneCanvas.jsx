@@ -294,8 +294,11 @@ const CORE_EDGES = [
 ];
 
 const ALL_EDGES = [...SHELL_EDGES, ...LATTICE_EDGES, ...CORE_EDGES];
+const LATTICE_EDGE_OFFSET = SHELL_EDGES.length;
+const CORE_EDGE_OFFSET = SHELL_EDGES.length + LATTICE_EDGES.length;
 const CORE_INDICES = [16, 17, 18, 19, 20, 21];
 const SENSITIVE_INDICES = [1, 2, 5, 6, 10, 11, 12, 13];
+const ANCHOR_VISUAL_SLOTS = 4;
 
 const MODULE_DEFINITIONS = [
   {
@@ -397,7 +400,17 @@ function buildGraphDepths(count, edges) {
 
 const GRAPH_DEPTHS = buildGraphDepths(NODE_DEFINITIONS.length, ALL_EDGES);
 
-function writeEdgeBuffers({ edges, positions, charges, posArray, colorArray, opacityBias, palette }) {
+function writeEdgeBuffers({
+  edges,
+  positions,
+  charges,
+  edgeBoosts = [],
+  memoryBoosts = [],
+  posArray,
+  colorArray,
+  opacityBias,
+  palette
+}) {
   const edgeColor = new Color();
 
   edges.forEach(([from, to], index) => {
@@ -407,6 +420,8 @@ function writeEdgeBuffers({ edges, positions, charges, posArray, colorArray, opa
     const colorIndex = index * 6;
     const energy =
       (charges[from] + charges[to]) * 0.5 +
+      (edgeBoosts[index] ?? 0) * 1.18 +
+      (memoryBoosts[index] ?? 0) * 0.34 +
       (NODE_DEFINITIONS[from].layer === 'core' || NODE_DEFINITIONS[to].layer === 'core' ? 0.16 : 0);
 
     posArray[vertexIndex] = fromPosition.x;
@@ -442,14 +457,30 @@ function StaticAura() {
 function ResonanceLattice({ compact, interaction }) {
   const rootRef = useRef(null);
   const dustRef = useRef(null);
+  const flowRefs = useRef([]);
+  const flowMaterials = useRef([]);
   const nodeCoreRefs = useRef([]);
   const nodeGlowRefs = useRef([]);
   const nodeMaterials = useRef([]);
   const nodeGlowMaterials = useRef([]);
+  const anchorGroupRefs = useRef([]);
+  const anchorOuterRingRefs = useRef([]);
+  const anchorOuterMaterials = useRef([]);
+  const anchorInnerRingRefs = useRef([]);
+  const anchorInnerMaterials = useRef([]);
+  const anchorHaloRefs = useRef([]);
+  const anchorHaloMaterials = useRef([]);
   const moduleRefs = useRef([]);
   const moduleMaterials = useRef([]);
   const chamberRef = useRef(null);
   const chamberPlaneMaterials = useRef([]);
+  const chamberRingRefs = useRef([]);
+  const chamberRingMaterials = useRef([]);
+  const coreSeedRef = useRef(null);
+  const coreSeedMaterialRef = useRef(null);
+  const coreHaloRef = useRef(null);
+  const coreHaloMaterialRef = useRef(null);
+  const innerLightRef = useRef(null);
   const shellPositionRef = useRef(null);
   const shellColorRef = useRef(null);
   const latticePositionRef = useRef(null);
@@ -480,6 +511,8 @@ function ResonanceLattice({ compact, interaction }) {
     structured: 0,
     chamber: 0,
     phaseFlash: 0,
+    unlockPulse: 0,
+    shock: 0,
     coreUnlocked: false
   });
   const tempVector = useMemo(() => new Vector3(), []);
@@ -523,9 +556,16 @@ function ResonanceLattice({ compact, interaction }) {
     system.memoryTarget = Math.max(0, system.memoryTarget - delta * 0.043);
     system.memory = MathUtils.damp(system.memory, system.memoryTarget, 2.8, delta);
     system.phaseFlash = Math.max(0, system.phaseFlash - delta * 1.05);
+    system.unlockPulse = Math.max(0, system.unlockPulse - delta * 0.54);
+    system.shock = Math.max(0, system.shock - delta * 1.12);
 
     const probe = tempVector.set(pointer.currentX * 1.8, pointer.currentY * 1.22, 0.2);
     const charges = new Array(NODE_DEFINITIONS.length).fill(0);
+    const structuralImpulses = new Array(NODE_DEFINITIONS.length).fill(0);
+    const memoryMarks = new Array(NODE_DEFINITIONS.length).fill(0);
+    const edgeFlowStrengths = new Array(ALL_EDGES.length).fill(0);
+    const edgeFlowProgress = new Array(ALL_EDGES.length).fill(0.5);
+    const edgeMemory = new Array(ALL_EDGES.length).fill(0);
 
     anchorsRef.current = anchorsRef.current
       .map((anchor) => {
@@ -536,7 +576,7 @@ function ResonanceLattice({ compact, interaction }) {
           ...anchor,
           age: nextAge,
           strength,
-          pulse: Math.max(0, anchor.pulse - delta * 1.45)
+          pulse: Math.max(0, anchor.pulse - delta * (anchor.core ? 0.74 : 0.9))
         };
       })
       .filter((anchor) => anchor.strength > 0.01);
@@ -601,8 +641,9 @@ function ResonanceLattice({ compact, interaction }) {
             activeAnchors.length = 4;
           }
 
-          system.memoryTarget = Math.min(1, system.memoryTarget + (coreAnchor ? 0.34 : 0.18));
-          system.phaseFlash = Math.min(1, system.phaseFlash + (coreAnchor ? 0.9 : 0.45));
+          system.memoryTarget = Math.min(1, system.memoryTarget + (coreAnchor ? 0.4 : 0.22));
+          system.phaseFlash = Math.min(1, system.phaseFlash + (coreAnchor ? 1 : 0.58));
+          system.shock = Math.min(1, system.shock + (coreAnchor ? 0.92 : 0.6));
         }
       });
     }
@@ -621,7 +662,15 @@ function ResonanceLattice({ compact, interaction }) {
 
     system.structured = MathUtils.damp(system.structured, structuredTarget, 2.6, delta);
     system.chamber = MathUtils.damp(system.chamber, chamberTarget, 2.2, delta);
-    system.coreUnlocked = system.chamber > 0.48;
+
+    const nextCoreUnlocked = system.chamber > 0.48;
+
+    if (nextCoreUnlocked && !system.coreUnlocked) {
+      system.unlockPulse = 1;
+      system.phaseFlash = Math.min(1, system.phaseFlash + 0.88);
+    }
+
+    system.coreUnlocked = nextCoreUnlocked;
 
     let bestIndex = -1;
     let bestScore = 0;
@@ -650,6 +699,8 @@ function ResonanceLattice({ compact, interaction }) {
       }
 
       let graphCharge = selectiveFocus * 0.75;
+      let structuralImpulse = selectiveFocus * 0.28;
+      let memoryMark = selectiveFocus * 0.14;
 
       activeAnchors.forEach((anchor) => {
         const depth = GRAPH_DEPTHS[anchor.nodeIndex][index];
@@ -660,9 +711,13 @@ function ResonanceLattice({ compact, interaction }) {
 
         const falloff = Math.exp(-depth * (anchor.core ? 0.58 : 0.84));
         graphCharge += anchor.strength * falloff * (anchor.core ? 1.18 : 0.84);
+        structuralImpulse += anchor.pulse * Math.exp(-depth * (anchor.core ? 0.52 : 0.76)) * (anchor.core ? 1.12 : 0.88);
+        memoryMark += anchor.strength * Math.exp(-depth * 0.96) * (anchor.core ? 0.94 : 0.72);
       });
 
       charges[index] = graphCharge;
+      structuralImpulses[index] = structuralImpulse;
+      memoryMarks[index] = Math.min(1, memoryMark);
     });
 
     focusRef.current.primary = bestIndex;
@@ -670,30 +725,103 @@ function ResonanceLattice({ compact, interaction }) {
     focusRef.current.primaryStrength = bestScore;
     focusRef.current.secondaryStrength = secondScore;
 
+    ALL_EDGES.forEach(([from, to], edgeIndex) => {
+      let strongestWave = 0;
+      let strongestProgress = 0.5;
+      let residual = Math.min(0.48, (memoryMarks[from] + memoryMarks[to]) * 0.22);
+
+      activeAnchors.forEach((anchor) => {
+        const depthFrom = GRAPH_DEPTHS[anchor.nodeIndex][from];
+        const depthTo = GRAPH_DEPTHS[anchor.nodeIndex][to];
+
+        if (depthFrom === Infinity || depthTo === Infinity) {
+          return;
+        }
+
+        const minDepth = Math.min(depthFrom, depthTo);
+        const maxDepth = Math.max(depthFrom, depthTo);
+        const centerDepth = (depthFrom + depthTo) * 0.5;
+        const front = anchor.age * (anchor.core ? 2.55 : 3.15) + anchor.pulse * 0.42;
+        const width = anchor.core ? 0.88 : 0.74;
+        const wave = Math.exp(-((centerDepth - front) ** 2) / (width * width));
+        const strength =
+          wave *
+          (0.18 + anchor.strength * 0.86 + anchor.pulse * 0.76) *
+          (anchor.core ? 1.12 : 0.98);
+
+        residual += anchor.strength * Math.exp(-maxDepth * 1.02) * (anchor.core ? 0.1 : 0.06);
+
+        if (strength > strongestWave) {
+          strongestWave = strength;
+
+          if (maxDepth - minDepth < 0.001) {
+            strongestProgress = 0.5 + Math.sin(elapsed * 2.4 + edgeIndex * 0.7) * 0.14;
+          } else {
+            const segmentProgress = MathUtils.clamp(
+              (front - minDepth) / Math.max(0.001, maxDepth - minDepth),
+              0,
+              1
+            );
+
+            strongestProgress = depthFrom <= depthTo ? segmentProgress : 1 - segmentProgress;
+          }
+        }
+      });
+
+      edgeFlowStrengths[edgeIndex] = Math.min(1, strongestWave);
+      edgeFlowProgress[edgeIndex] = strongestProgress;
+      edgeMemory[edgeIndex] = Math.min(1, residual);
+    });
+
+    const shellWaveBoosts = edgeFlowStrengths.slice(0, LATTICE_EDGE_OFFSET);
+    const latticeWaveBoosts = edgeFlowStrengths.slice(LATTICE_EDGE_OFFSET, CORE_EDGE_OFFSET);
+    const coreWaveBoosts = edgeFlowStrengths.slice(CORE_EDGE_OFFSET);
+    const shellMemoryBoosts = edgeMemory.slice(0, LATTICE_EDGE_OFFSET);
+    const latticeMemoryBoosts = edgeMemory.slice(LATTICE_EDGE_OFFSET, CORE_EDGE_OFFSET);
+    const coreMemoryBoosts = edgeMemory.slice(CORE_EDGE_OFFSET);
+    const shellWavePeak = shellWaveBoosts.reduce((peak, value) => Math.max(peak, value), 0);
+    const latticeWavePeak = latticeWaveBoosts.reduce((peak, value) => Math.max(peak, value), 0);
+    const coreWavePeak = coreWaveBoosts.reduce((peak, value) => Math.max(peak, value), 0);
+
     NODE_DEFINITIONS.forEach((node, index) => {
       const charge = charges[index];
       const base = node.base;
       const aligned = node.aligned;
+      const structuralImpulse = structuralImpulses[index];
+      const memoryMark = memoryMarks[index];
       const wobbleX = Math.sin(elapsed * 0.72 + node.phase) * node.wobble[0];
       const wobbleY = Math.cos(elapsed * 0.68 + node.phase * 1.1) * node.wobble[1];
       const wobbleZ = Math.sin(elapsed * 0.58 + node.phase * 1.3) * node.wobble[2];
       const basePosition = positions[index];
-      const structureMix =
+      const structureMix = Math.min(
+        1,
         node.layer === 'core'
-          ? system.chamber
+          ? system.chamber + system.unlockPulse * 0.22
           : node.layer === 'lattice'
-            ? system.structured * 0.88
-            : system.structured * 0.58;
+            ? system.structured * 0.88 + system.unlockPulse * 0.16
+            : system.structured * 0.58 + system.unlockPulse * 0.08
+      );
       const targetX = MathUtils.lerp(base[0] + wobbleX, aligned[0], structureMix);
       const targetY = MathUtils.lerp(base[1] + wobbleY, aligned[1], structureMix);
       const targetZ = MathUtils.lerp(base[2] + wobbleZ, aligned[2], structureMix);
       const pullX = (probe.x - targetX) * Math.min(0.16, charge * 0.05) * node.sensitive;
       const pullY = (probe.y - targetY) * Math.min(0.16, charge * 0.05) * node.sensitive;
       const ripple = Math.sin(elapsed * 3.2 + node.phase + charge * 1.4) * 0.03 * Math.min(1, charge);
+      const radialLength = Math.max(0.001, Math.hypot(targetX, targetY, targetZ));
+      const radialX = targetX / radialLength;
+      const radialY = targetY / radialLength;
+      const radialZ = targetZ / radialLength;
+      const tension =
+        structuralImpulse * (node.layer === 'shell' ? 0.17 : node.layer === 'lattice' ? 0.12 : 0.08) +
+        system.unlockPulse * (node.layer === 'core' ? 0.16 : node.layer === 'lattice' ? 0.08 : 0.04);
       const chamberVisibility = node.layer === 'core' ? system.chamber : 1;
-      const finalX = targetX + pullX + ripple * 0.8;
-      const finalY = targetY + pullY + ripple;
-      const finalZ = targetZ + ripple * 0.45 + (node.layer === 'core' ? chamberVisibility * 0.08 : 0);
+      const finalX = targetX + pullX + ripple * 0.8 + radialX * tension;
+      const finalY = targetY + pullY + ripple + radialY * tension;
+      const finalZ =
+        targetZ +
+        ripple * 0.45 +
+        radialZ * tension * 0.72 +
+        (node.layer === 'core' ? chamberVisibility * 0.08 + system.unlockPulse * 0.12 : system.unlockPulse * 0.03);
 
       basePosition.set(finalX, finalY, finalZ);
 
@@ -701,19 +829,29 @@ function ResonanceLattice({ compact, interaction }) {
       const glowMesh = nodeGlowRefs.current[index];
       const material = nodeMaterials.current[index];
       const glowMaterial = nodeGlowMaterials.current[index];
-      const visibleEnergy = Math.min(1, charge * 0.72 + pointerPresence * 0.26 + system.phaseFlash * 0.3);
+      const visibleEnergy = Math.min(
+        1,
+        charge * 0.72 +
+          pointerPresence * 0.26 +
+          system.phaseFlash * 0.3 +
+          structuralImpulse * 0.44 +
+          memoryMark * 0.16
+      );
       const baseScale =
         node.scale * (node.layer === 'core' ? 1 + system.chamber * 0.28 : 1 + system.structured * 0.08);
-      const scale = baseScale * (1 + visibleEnergy * 0.72);
+      const scale = baseScale * (1 + visibleEnergy * 0.72 + structuralImpulse * 0.48 + memoryMark * 0.14);
 
       if (coreMesh && material) {
         coreMesh.position.copy(basePosition);
         coreMesh.scale.setScalar(scale);
         coreMesh.visible = chamberVisibility > 0.04;
-        material.opacity = (node.layer === 'core' ? 0.18 + system.chamber * 0.7 : 0.65) * chamberVisibility;
+        material.opacity =
+          ((node.layer === 'core' ? 0.18 + system.chamber * 0.7 : 0.65) + memoryMark * 0.08) *
+          chamberVisibility;
         material.emissiveIntensity =
           (node.layer === 'core' ? 0.34 + system.chamber * 0.52 : 0.24) +
-          visibleEnergy * 0.54;
+          visibleEnergy * 0.54 +
+          structuralImpulse * 0.18;
       }
 
       if (glowMesh && glowMaterial) {
@@ -722,9 +860,54 @@ function ResonanceLattice({ compact, interaction }) {
         glowMesh.visible = chamberVisibility > 0.04;
         glowMaterial.opacity =
           (node.layer === 'core' ? 0.08 + system.chamber * 0.14 : 0.05) +
-          visibleEnergy * 0.12;
+          visibleEnergy * 0.12 +
+          memoryMark * 0.06;
       }
     });
+
+    for (let slot = 0; slot < ANCHOR_VISUAL_SLOTS; slot += 1) {
+      const anchor = activeAnchors[slot];
+      const group = anchorGroupRefs.current[slot];
+      const outerRing = anchorOuterRingRefs.current[slot];
+      const outerMaterial = anchorOuterMaterials.current[slot];
+      const innerRing = anchorInnerRingRefs.current[slot];
+      const innerMaterial = anchorInnerMaterials.current[slot];
+      const halo = anchorHaloRefs.current[slot];
+      const haloMaterial = anchorHaloMaterials.current[slot];
+
+      if (!group || !outerRing || !outerMaterial || !innerRing || !innerMaterial || !halo || !haloMaterial) {
+        continue;
+      }
+
+      if (!anchor) {
+        group.visible = false;
+        continue;
+      }
+
+      const nodePosition = positions[anchor.nodeIndex];
+      const pulse = anchor.pulse;
+      const memory = anchor.strength;
+      const radius = anchor.core ? 0.32 : 0.22;
+
+      group.visible = true;
+      group.position.copy(nodePosition);
+      group.rotation.x = elapsed * 0.45 + slot * 0.36;
+      group.rotation.y = elapsed * (anchor.core ? 0.84 : 0.56) * (slot % 2 === 0 ? 1 : -1);
+      group.rotation.z = elapsed * 0.34 * (slot % 2 === 0 ? 1 : -1);
+
+      outerRing.scale.setScalar(radius + (1 - pulse) * (anchor.core ? 0.98 : 0.72) + memory * 0.12);
+      innerRing.scale.setScalar(radius * 0.92 + memory * 0.24 + pulse * 0.12);
+      halo.scale.setScalar(radius * 1.3 + pulse * 0.68 + memory * 0.34);
+
+      outerMaterial.color.set(anchor.core ? '#f6fbff' : '#96e2ff');
+      outerMaterial.opacity = pulse * (anchor.core ? 0.42 : 0.34) + memory * 0.1 + system.phaseFlash * 0.04;
+
+      innerMaterial.color.set(anchor.core ? '#ab8dff' : '#6b7eff');
+      innerMaterial.opacity = 0.04 + memory * 0.15 + pulse * 0.1;
+
+      haloMaterial.color.set(anchor.core ? '#c8f0ff' : '#8a75ff');
+      haloMaterial.opacity = pulse * 0.16 + memory * 0.08;
+    }
 
     MODULE_DEFINITIONS.forEach((module, index) => {
       const mesh = moduleRefs.current[index];
@@ -736,38 +919,59 @@ function ResonanceLattice({ compact, interaction }) {
       }
 
       const charge = charges[module.nodeIndex];
+      const memoryMark = memoryMarks[module.nodeIndex];
       const align = MathUtils.clamp(system.structured * 1.12, 0, 1);
       const offsetX = MathUtils.lerp(module.baseOffset[0], module.alignedOffset[0], align);
       const offsetY = MathUtils.lerp(module.baseOffset[1], module.alignedOffset[1], align);
       const offsetZ = MathUtils.lerp(module.baseOffset[2], module.alignedOffset[2], align);
+      const offsetLength = Math.max(0.001, Math.hypot(offsetX, offsetY, offsetZ));
+      const offsetSpread =
+        charge * 0.14 +
+        memoryMark * 0.08 +
+        system.unlockPulse * 0.18 +
+        system.phaseFlash * 0.05;
 
-      mesh.position.set(nodePosition.x + offsetX, nodePosition.y + offsetY, nodePosition.z + offsetZ);
-      mesh.rotation.x = MathUtils.lerp(module.baseRotation[0], module.alignedRotation[0], align) + charge * 0.16;
-      mesh.rotation.y = MathUtils.lerp(module.baseRotation[1], module.alignedRotation[1], align) + charge * 0.1;
-      mesh.rotation.z = MathUtils.lerp(module.baseRotation[2], module.alignedRotation[2], align) + charge * 0.08;
-      mesh.scale.setScalar(1 + charge * 0.26 + system.phaseFlash * 0.12);
+      mesh.position.set(
+        nodePosition.x + offsetX + (offsetX / offsetLength) * offsetSpread,
+        nodePosition.y + offsetY + (offsetY / offsetLength) * offsetSpread,
+        nodePosition.z + offsetZ + (offsetZ / offsetLength) * offsetSpread
+      );
+      mesh.rotation.x =
+        MathUtils.lerp(module.baseRotation[0], module.alignedRotation[0], align) +
+        charge * 0.24 +
+        system.unlockPulse * 0.2;
+      mesh.rotation.y =
+        MathUtils.lerp(module.baseRotation[1], module.alignedRotation[1], align) +
+        charge * 0.14 +
+        memoryMark * 0.08;
+      mesh.rotation.z =
+        MathUtils.lerp(module.baseRotation[2], module.alignedRotation[2], align) +
+        charge * 0.1 +
+        system.unlockPulse * 0.12;
+      mesh.scale.setScalar(1 + charge * 0.28 + memoryMark * 0.16 + system.phaseFlash * 0.12 + system.unlockPulse * 0.18);
       mesh.visible = !compact || index < 4;
 
-      material.opacity = 0.08 + align * 0.16 + charge * 0.12;
-      material.emissiveIntensity = 0.08 + charge * 0.2 + system.phaseFlash * 0.12;
+      material.opacity = 0.08 + align * 0.16 + charge * 0.12 + memoryMark * 0.08 + system.unlockPulse * 0.1;
+      material.emissiveIntensity =
+        0.08 + charge * 0.22 + memoryMark * 0.16 + system.phaseFlash * 0.12 + system.unlockPulse * 0.26;
     });
 
     if (rootRef.current) {
       rootRef.current.rotation.x = MathUtils.damp(
         rootRef.current.rotation.x,
-        pointer.dragY * 0.38 + pointer.currentY * 0.12 + Math.sin(elapsed * 0.24) * 0.06,
+        pointer.dragY * 0.38 + pointer.currentY * 0.12 + Math.sin(elapsed * 0.24) * 0.06 + system.shock * 0.06,
         4.2,
         delta
       );
       rootRef.current.rotation.y = MathUtils.damp(
         rootRef.current.rotation.y,
-        pointer.dragX * 0.48 + pointer.currentX * 0.16 + Math.cos(elapsed * 0.22) * 0.08,
+        pointer.dragX * 0.48 + pointer.currentX * 0.16 + Math.cos(elapsed * 0.22) * 0.08 - system.shock * 0.08,
         4.2,
         delta
       );
       rootRef.current.rotation.z = MathUtils.damp(
         rootRef.current.rotation.z,
-        Math.sin(elapsed * 0.18) * 0.04 + system.phaseFlash * 0.08,
+        Math.sin(elapsed * 0.18) * 0.04 + system.phaseFlash * 0.08 + system.unlockPulse * 0.12,
         3.2,
         delta
       );
@@ -777,18 +981,21 @@ function ResonanceLattice({ compact, interaction }) {
         3.6,
         delta
       );
+      rootRef.current.scale.setScalar(1 + system.shock * 0.02 + system.unlockPulse * 0.045);
     }
 
     if (chamberRef.current) {
-      chamberRef.current.rotation.y += delta * (0.18 + system.chamber * 0.26);
+      chamberRef.current.rotation.y += delta * (0.18 + system.chamber * 0.26 + system.unlockPulse * 0.62);
       chamberRef.current.rotation.x = MathUtils.damp(
         chamberRef.current.rotation.x,
-        0.18 + pointer.currentY * 0.08,
+        0.18 + pointer.currentY * 0.08 + system.unlockPulse * 0.12,
         3.2,
         delta
       );
       chamberRef.current.visible = system.chamber > 0.04;
-      chamberRef.current.scale.setScalar(0.82 + system.chamber * 0.34 + system.phaseFlash * 0.12);
+      chamberRef.current.scale.setScalar(
+        0.82 + system.chamber * 0.34 + system.phaseFlash * 0.12 + system.unlockPulse * 0.34
+      );
     }
 
     chamberPlaneMaterials.current.forEach((material, index) => {
@@ -796,8 +1003,63 @@ function ResonanceLattice({ compact, interaction }) {
         return;
       }
 
-      material.opacity = 0.02 + system.chamber * (index === 0 ? 0.11 : 0.08) + system.phaseFlash * 0.05;
+      material.opacity =
+        0.02 +
+        system.chamber * (index === 0 ? 0.12 : 0.09) +
+        system.phaseFlash * 0.05 +
+        system.unlockPulse * 0.14;
     });
+
+    chamberRingRefs.current.forEach((ring, index) => {
+      if (!ring) {
+        return;
+      }
+
+      ring.rotation.x += delta * (index === 0 ? 0.58 : -0.46);
+      ring.rotation.y += delta * (index === 0 ? 0.28 : 0.36);
+      ring.scale.setScalar(0.42 + system.chamber * 0.24 + system.unlockPulse * (index === 0 ? 0.54 : 0.38));
+      ring.visible = system.chamber > 0.08;
+    });
+
+    chamberRingMaterials.current.forEach((material, index) => {
+      if (!material) {
+        return;
+      }
+
+      material.opacity =
+        0.04 +
+        system.chamber * (index === 0 ? 0.14 : 0.1) +
+        system.unlockPulse * (index === 0 ? 0.22 : 0.16) +
+        system.phaseFlash * 0.05;
+    });
+
+    if (coreSeedRef.current) {
+      coreSeedRef.current.visible = system.chamber > 0.08;
+      coreSeedRef.current.rotation.x += delta * (0.74 + system.unlockPulse * 1.2);
+      coreSeedRef.current.rotation.y += delta * (0.58 + system.chamber * 0.6);
+      coreSeedRef.current.rotation.z += delta * (0.32 + system.phaseFlash * 0.4);
+      coreSeedRef.current.scale.setScalar(0.1 + system.chamber * 0.18 + system.unlockPulse * 0.3);
+    }
+
+    if (coreSeedMaterialRef.current) {
+      coreSeedMaterialRef.current.opacity = 0.08 + system.chamber * 0.22 + system.unlockPulse * 0.18;
+      coreSeedMaterialRef.current.emissiveIntensity = 0.28 + system.chamber * 0.46 + system.unlockPulse * 1.05;
+    }
+
+    if (coreHaloRef.current) {
+      coreHaloRef.current.visible = system.chamber > 0.08;
+      coreHaloRef.current.rotation.z += delta * (0.28 + system.unlockPulse * 0.52);
+      coreHaloRef.current.scale.setScalar(0.34 + system.chamber * 0.16 + system.unlockPulse * 0.42);
+    }
+
+    if (coreHaloMaterialRef.current) {
+      coreHaloMaterialRef.current.opacity = 0.04 + system.chamber * 0.16 + system.unlockPulse * 0.2;
+    }
+
+    if (innerLightRef.current) {
+      innerLightRef.current.intensity =
+        0.2 + system.chamber * 6.2 + system.unlockPulse * 10 + (anchorCoreActive ? 3.4 : 0);
+    }
 
     if (dustRef.current) {
       dustRef.current.rotation.y = elapsed * 0.025;
@@ -806,10 +1068,51 @@ function ResonanceLattice({ compact, interaction }) {
       dustRef.current.position.y = MathUtils.lerp(dustRef.current.position.y, -pointer.currentY * 0.12, 0.05);
     }
 
+    ALL_EDGES.forEach(([from, to], edgeIndex) => {
+      const flow = flowRefs.current[edgeIndex];
+      const material = flowMaterials.current[edgeIndex];
+
+      if (!flow || !material) {
+        return;
+      }
+
+      const strength = edgeFlowStrengths[edgeIndex];
+      const residual = edgeMemory[edgeIndex];
+
+      if (strength < 0.025 && residual < 0.05) {
+        flow.visible = false;
+        return;
+      }
+
+      const fromPosition = positions[from];
+      const toPosition = positions[to];
+      const progress = edgeFlowProgress[edgeIndex];
+
+      flow.visible = !compact || edgeIndex % 2 === 0 || strength > 0.08 || residual > 0.12;
+      flow.position.set(
+        MathUtils.lerp(fromPosition.x, toPosition.x, progress),
+        MathUtils.lerp(fromPosition.y, toPosition.y, progress),
+        MathUtils.lerp(fromPosition.z, toPosition.z, progress)
+      );
+      flow.scale.setScalar((compact ? 0.9 : 1) * (0.018 + strength * 0.062 + residual * 0.022 + system.unlockPulse * 0.018));
+
+      if (edgeIndex < LATTICE_EDGE_OFFSET) {
+        material.color.set('#8f7dff');
+      } else if (edgeIndex < CORE_EDGE_OFFSET) {
+        material.color.set('#8fe4ff');
+      } else {
+        material.color.set('#f4fbff');
+      }
+
+      material.opacity = 0.02 + strength * 0.42 + residual * 0.08 + system.unlockPulse * 0.05;
+    });
+
     writeEdgeBuffers({
       edges: SHELL_EDGES,
       positions,
       charges,
+      edgeBoosts: shellWaveBoosts,
+      memoryBoosts: shellMemoryBoosts,
       posArray: shellPositions,
       colorArray: shellColors,
       opacityBias: 0.08 + system.structured * 0.12,
@@ -823,6 +1126,8 @@ function ResonanceLattice({ compact, interaction }) {
       edges: LATTICE_EDGES,
       positions,
       charges,
+      edgeBoosts: latticeWaveBoosts,
+      memoryBoosts: latticeMemoryBoosts,
       posArray: latticePositions,
       colorArray: latticeColors,
       opacityBias: 0.14 + system.structured * 0.18,
@@ -836,6 +1141,8 @@ function ResonanceLattice({ compact, interaction }) {
       edges: CORE_EDGES,
       positions,
       charges,
+      edgeBoosts: coreWaveBoosts,
+      memoryBoosts: coreMemoryBoosts,
       posArray: corePositions,
       colorArray: coreColors,
       opacityBias: 0.22 + system.chamber * 0.28,
@@ -870,15 +1177,26 @@ function ResonanceLattice({ compact, interaction }) {
     }
 
     if (shellMaterialRef.current) {
-      shellMaterialRef.current.opacity = 0.16 + pointerPresence * 0.16 + system.structured * 0.14;
+      shellMaterialRef.current.opacity =
+        0.16 + pointerPresence * 0.16 + system.structured * 0.14 + shellWavePeak * 0.18 + system.shock * 0.08;
     }
 
     if (latticeMaterialRef.current) {
-      latticeMaterialRef.current.opacity = 0.22 + pointerPresence * 0.16 + system.structured * 0.2;
+      latticeMaterialRef.current.opacity =
+        0.22 +
+        pointerPresence * 0.16 +
+        system.structured * 0.2 +
+        latticeWavePeak * 0.22 +
+        system.unlockPulse * 0.06;
     }
 
     if (coreMaterialRef.current) {
-      coreMaterialRef.current.opacity = 0.04 + system.chamber * 0.38 + system.phaseFlash * 0.08;
+      coreMaterialRef.current.opacity =
+        0.04 +
+        system.chamber * 0.38 +
+        system.phaseFlash * 0.08 +
+        coreWavePeak * 0.28 +
+        system.unlockPulse * 0.2;
     }
   });
 
@@ -905,6 +1223,8 @@ function ResonanceLattice({ compact, interaction }) {
       </points>
 
       <group ref={rootRef}>
+        <pointLight ref={innerLightRef} position={[0, 0, 0]} intensity={0.2} distance={4.2} color="#def6ff" />
+
         <lineSegments>
           <bufferGeometry>
             <bufferAttribute
@@ -986,6 +1306,27 @@ function ResonanceLattice({ compact, interaction }) {
           />
         </lineSegments>
 
+        {ALL_EDGES.map((_, index) => (
+          <mesh
+            key={`flow-${index}`}
+            ref={(element) => {
+              flowRefs.current[index] = element;
+            }}
+          >
+            <octahedronGeometry args={[1, 0]} />
+            <meshBasicMaterial
+              ref={(material) => {
+                flowMaterials.current[index] = material;
+              }}
+              color="#8fe4ff"
+              transparent
+              opacity={0.08}
+              blending={AdditiveBlending}
+              depthWrite={false}
+            />
+          </mesh>
+        ))}
+
         <group ref={chamberRef}>
           {[0, 1].map((planeIndex) => (
             <mesh
@@ -1006,6 +1347,56 @@ function ResonanceLattice({ compact, interaction }) {
               />
             </mesh>
           ))}
+
+          {[0, 1].map((ringIndex) => (
+            <mesh
+              key={`chamber-ring-${ringIndex}`}
+              ref={(element) => {
+                chamberRingRefs.current[ringIndex] = element;
+              }}
+              rotation={ringIndex === 0 ? [Math.PI / 2.8, Math.PI / 4.2, 0.18] : [-Math.PI / 3.1, Math.PI / 5.4, -0.32]}
+            >
+              <torusGeometry args={[1, ringIndex === 0 ? 0.06 : 0.04, 12, 72]} />
+              <meshBasicMaterial
+                ref={(material) => {
+                  chamberRingMaterials.current[ringIndex] = material;
+                }}
+                color={ringIndex === 0 ? '#8fe4ff' : '#9d80ff'}
+                transparent
+                opacity={0.06}
+                blending={AdditiveBlending}
+                depthWrite={false}
+              />
+            </mesh>
+          ))}
+
+          <mesh ref={coreHaloRef} rotation={[Math.PI / 2.5, Math.PI / 4.8, 0.12]}>
+            <torusGeometry args={[1, 0.05, 10, 72]} />
+            <meshBasicMaterial
+              ref={coreHaloMaterialRef}
+              color="#c9f2ff"
+              transparent
+              opacity={0.08}
+              blending={AdditiveBlending}
+              depthWrite={false}
+            />
+          </mesh>
+
+          <mesh ref={coreSeedRef}>
+            <octahedronGeometry args={[1, 0]} />
+            <meshPhysicalMaterial
+              ref={coreSeedMaterialRef}
+              color="#eef7ff"
+              emissive="#8f78ff"
+              emissiveIntensity={0.42}
+              metalness={0.14}
+              roughness={0.18}
+              clearcoat={1}
+              clearcoatRoughness={0.08}
+              transparent
+              opacity={0.18}
+            />
+          </mesh>
         </group>
 
         {MODULE_DEFINITIONS.map((module, index) => (
@@ -1076,6 +1467,70 @@ function ResonanceLattice({ compact, interaction }) {
                 metalness={0.12}
                 transparent
                 opacity={0.72}
+              />
+            </mesh>
+          </group>
+        ))}
+
+        {Array.from({ length: ANCHOR_VISUAL_SLOTS }).map((_, slot) => (
+          <group
+            key={`anchor-visual-${slot}`}
+            ref={(element) => {
+              anchorGroupRefs.current[slot] = element;
+            }}
+          >
+            <mesh
+              ref={(element) => {
+                anchorHaloRefs.current[slot] = element;
+              }}
+            >
+              <sphereGeometry args={[1, 16, 16]} />
+              <meshBasicMaterial
+                ref={(material) => {
+                  anchorHaloMaterials.current[slot] = material;
+                }}
+                color="#8a75ff"
+                transparent
+                opacity={0.08}
+                blending={AdditiveBlending}
+                depthWrite={false}
+              />
+            </mesh>
+
+            <mesh
+              ref={(element) => {
+                anchorOuterRingRefs.current[slot] = element;
+              }}
+            >
+              <torusGeometry args={[1, 0.05, 10, 72]} />
+              <meshBasicMaterial
+                ref={(material) => {
+                  anchorOuterMaterials.current[slot] = material;
+                }}
+                color="#96e2ff"
+                transparent
+                opacity={0.12}
+                blending={AdditiveBlending}
+                depthWrite={false}
+              />
+            </mesh>
+
+            <mesh
+              ref={(element) => {
+                anchorInnerRingRefs.current[slot] = element;
+              }}
+              rotation={[Math.PI / 2.35, 0, 0]}
+            >
+              <torusGeometry args={[1, 0.026, 10, 64]} />
+              <meshBasicMaterial
+                ref={(material) => {
+                  anchorInnerMaterials.current[slot] = material;
+                }}
+                color="#6b7eff"
+                transparent
+                opacity={0.08}
+                blending={AdditiveBlending}
+                depthWrite={false}
               />
             </mesh>
           </group>
