@@ -20,8 +20,8 @@ export const portfolioEs = {
     },
     hero: {
       visualDirectionEyebrow: 'Enfoque de solución',
-      sceneLabel: 'Malla de arquitectura',
-      sceneHint: 'Recorre el sistema o pulsa para reconfigurar una capa de la malla.'
+      sceneLabel: 'Campo de ensamblaje',
+      sceneHint: 'Guía las capas para alinear y estabilizar la estructura oculta.'
     },
     sections: {
       about: 'Enfoque de solución',

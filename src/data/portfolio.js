@@ -25,8 +25,8 @@ const portfolioEn = {
     },
     hero: {
       visualDirectionEyebrow: 'Solution focus',
-      sceneLabel: 'Architecture Mesh',
-      sceneHint: 'Move through the system or tap to reconfigure a layer of the mesh.'
+      sceneLabel: 'Assembly Field',
+      sceneHint: 'Guide the layers to align and stabilize the hidden structure.'
     },
     sections: {
       about: 'Solution Mindset',
