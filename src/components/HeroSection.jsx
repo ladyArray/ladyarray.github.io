@@ -8,12 +8,11 @@ const SceneCanvas = lazy(() => import('./SceneCanvas'));
 function SceneFallback() {
   return (
     <div className="absolute inset-0 overflow-hidden">
-      <div className="absolute left-1/2 top-1/2 h-60 w-60 -translate-x-1/2 -translate-y-1/2 rounded-[2.8rem] bg-violet/24 blur-[78px]" />
-      <div className="absolute left-1/2 top-1/2 h-52 w-40 -translate-x-1/2 -translate-y-1/2 rotate-6 rounded-[2.2rem] border border-white/10" />
-      <div className="absolute left-1/2 top-1/2 h-44 w-56 -translate-x-1/2 -translate-y-1/2 -rotate-[10deg] rounded-[1.9rem] border border-cobalt/28 bg-cobalt/8" />
-      <div className="absolute left-[30%] top-[28%] h-32 w-24 rotate-12 rounded-[1.2rem] border border-white/[0.08] bg-white/[0.03]" />
-      <div className="absolute right-[24%] top-[36%] h-24 w-20 -rotate-[14deg] rounded-[0.9rem] border border-cobalt/20 bg-cobalt/[0.06]" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.07),transparent_38%),radial-gradient(circle_at_34%_26%,rgba(130,121,255,0.16),transparent_24%),radial-gradient(circle_at_68%_42%,rgba(55,168,255,0.14),transparent_22%)]" />
+      <div className="absolute left-1/2 top-1/2 h-60 w-60 -translate-x-1/2 -translate-y-1/2 rounded-full bg-violet/26 blur-[80px]" />
+      <div className="absolute left-1/2 top-1/2 h-48 w-48 -translate-x-1/2 -translate-y-1/2 border border-cobalt/28 [clip-path:polygon(50%_0%,84%_18%,100%_50%,82%_84%,50%_100%,18%_82%,0%_50%,16%_18%)]" />
+      <div className="absolute left-1/2 top-1/2 h-36 w-36 -translate-x-1/2 -translate-y-1/2 rounded-[1.8rem] border border-white/12 bg-cobalt/10 rotate-12" />
+      <div className="absolute inset-[18%] border border-white/[0.06] [clip-path:polygon(50%_0%,84%_18%,100%_50%,82%_84%,50%_100%,18%_82%,0%_50%,16%_18%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08),transparent_35%),radial-gradient(circle_at_35%_30%,rgba(130,121,255,0.18),transparent_25%),radial-gradient(circle_at_70%_40%,rgba(55,168,255,0.18),transparent_28%)]" />
     </div>
   );
 }

@@ -25,8 +25,8 @@ const portfolioEn = {
     },
     hero: {
       visualDirectionEyebrow: 'Solution focus',
-      sceneLabel: 'Assembly Field',
-      sceneHint: 'Guide the layers to align and stabilize the hidden structure.'
+      sceneLabel: 'Resonance Lattice',
+      sceneHint: 'Move through the graph and click to lock resonance paths and expose the core.'
     },
     sections: {
       about: 'Solution Mindset',

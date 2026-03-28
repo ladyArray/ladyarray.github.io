@@ -2,340 +2,392 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import {
   AdditiveBlending,
+  Color,
   DoubleSide,
   DynamicDrawUsage,
   MathUtils,
   Vector3
 } from 'three';
 
-const FRAME_OUTLINE = new Float32Array([
-  -0.5, -0.5, 0,
-  0.5, -0.5, 0,
-  0.5, -0.5, 0,
-  0.5, 0.5, 0,
-  0.5, 0.5, 0,
-  -0.5, 0.5, 0,
-  -0.5, 0.5, 0,
-  -0.5, -0.5, 0
-]);
-
-const ANCHOR_VISUAL_SLOTS = 4;
-const CORE_GROUP_INDEX = 5;
-
-const TONE_PALETTE = {
-  violet: {
-    surface: '#8b7cff',
-    outline: '#bfa9ff',
-    accent: '#cec6ff',
-    emissive: '#6f62ff'
+const NODE_DEFINITIONS = [
+  {
+    id: 'apex-top',
+    layer: 'shell',
+    sensitive: 0.4,
+    base: [0.04, 1.48, 0.16],
+    aligned: [0, 1.24, 0.04],
+    wobble: [0.04, 0.05, 0.03],
+    phase: 0.15,
+    scale: 0.08
   },
-  cobalt: {
-    surface: '#76c9ff',
-    outline: '#a7e6ff',
-    accent: '#d6f4ff',
-    emissive: '#2f98ff'
+  {
+    id: 'shoulder-right',
+    layer: 'shell',
+    sensitive: 1,
+    base: [1.06, 0.8, 0.58],
+    aligned: [0.9, 0.68, 0.22],
+    wobble: [0.05, 0.04, 0.03],
+    phase: 0.65,
+    scale: 0.07
   },
-  ice: {
-    surface: '#d8f3ff',
-    outline: '#f2fbff',
-    accent: '#ffffff',
-    emissive: '#8fd8ff'
+  {
+    id: 'shoulder-left',
+    layer: 'shell',
+    sensitive: 1,
+    base: [-1.12, 0.72, 0.46],
+    aligned: [-0.9, 0.68, 0.22],
+    wobble: [0.05, 0.04, 0.03],
+    phase: 0.98,
+    scale: 0.07
+  },
+  {
+    id: 'wing-right',
+    layer: 'shell',
+    sensitive: 0.75,
+    base: [1.48, 0.08, -0.24],
+    aligned: [1.14, 0.04, 0.02],
+    wobble: [0.05, 0.03, 0.05],
+    phase: 1.22,
+    scale: 0.064
+  },
+  {
+    id: 'wing-left',
+    layer: 'shell',
+    sensitive: 0.75,
+    base: [-1.56, -0.02, -0.18],
+    aligned: [-1.14, 0.02, 0.02],
+    wobble: [0.05, 0.03, 0.05],
+    phase: 1.42,
+    scale: 0.064
+  },
+  {
+    id: 'lower-right',
+    layer: 'shell',
+    sensitive: 0.92,
+    base: [1.02, -0.82, 0.42],
+    aligned: [0.82, -0.7, 0.18],
+    wobble: [0.04, 0.05, 0.03],
+    phase: 1.72,
+    scale: 0.068
+  },
+  {
+    id: 'lower-left',
+    layer: 'shell',
+    sensitive: 0.92,
+    base: [-1.08, -0.88, 0.5],
+    aligned: [-0.82, -0.7, 0.18],
+    wobble: [0.04, 0.05, 0.03],
+    phase: 1.98,
+    scale: 0.068
+  },
+  {
+    id: 'apex-bottom',
+    layer: 'shell',
+    sensitive: 0.45,
+    base: [0.02, -1.52, 0.14],
+    aligned: [0, -1.24, 0.02],
+    wobble: [0.04, 0.05, 0.03],
+    phase: 2.22,
+    scale: 0.078
+  },
+  {
+    id: 'back-upper',
+    layer: 'shell',
+    sensitive: 0.55,
+    base: [0.22, 0.56, -1.02],
+    aligned: [0.22, 0.42, -0.82],
+    wobble: [0.04, 0.04, 0.05],
+    phase: 2.68,
+    scale: 0.06
+  },
+  {
+    id: 'back-lower',
+    layer: 'shell',
+    sensitive: 0.55,
+    base: [-0.18, -0.68, -1.14],
+    aligned: [-0.22, -0.44, -0.84],
+    wobble: [0.04, 0.04, 0.05],
+    phase: 2.94,
+    scale: 0.06
+  },
+  {
+    id: 'bridge-top',
+    layer: 'lattice',
+    sensitive: 0.85,
+    base: [0.02, 0.74, 0.08],
+    aligned: [0, 0.76, 0.04],
+    wobble: [0.03, 0.03, 0.03],
+    phase: 3.1,
+    scale: 0.058
+  },
+  {
+    id: 'bridge-front',
+    layer: 'lattice',
+    sensitive: 1,
+    base: [0.02, 0.18, 0.98],
+    aligned: [0, 0.2, 0.76],
+    wobble: [0.03, 0.03, 0.03],
+    phase: 3.36,
+    scale: 0.062
+  },
+  {
+    id: 'bridge-bottom',
+    layer: 'lattice',
+    sensitive: 0.85,
+    base: [0.02, -0.62, 0.1],
+    aligned: [0, -0.66, 0.02],
+    wobble: [0.03, 0.03, 0.03],
+    phase: 3.62,
+    scale: 0.058
+  },
+  {
+    id: 'bridge-back',
+    layer: 'lattice',
+    sensitive: 0.86,
+    base: [0.04, 0.02, -0.72],
+    aligned: [0, 0, -0.54],
+    wobble: [0.03, 0.03, 0.03],
+    phase: 3.88,
+    scale: 0.06
+  },
+  {
+    id: 'brace-right',
+    layer: 'lattice',
+    sensitive: 0.66,
+    base: [0.82, 0.02, 0.22],
+    aligned: [0.64, 0.04, 0.16],
+    wobble: [0.03, 0.02, 0.03],
+    phase: 4.14,
+    scale: 0.054
+  },
+  {
+    id: 'brace-left',
+    layer: 'lattice',
+    sensitive: 0.66,
+    base: [-0.82, -0.02, 0.18],
+    aligned: [-0.64, 0.02, 0.16],
+    wobble: [0.03, 0.02, 0.03],
+    phase: 4.38,
+    scale: 0.054
+  },
+  {
+    id: 'core-top',
+    layer: 'core',
+    sensitive: 0.5,
+    base: [0, 0.3, 0.02],
+    aligned: [0, 0.36, 0.02],
+    wobble: [0.02, 0.02, 0.02],
+    phase: 4.72,
+    scale: 0.05
+  },
+  {
+    id: 'core-front-right',
+    layer: 'core',
+    sensitive: 0.55,
+    base: [0.28, 0.1, 0.26],
+    aligned: [0.24, 0.12, 0.18],
+    wobble: [0.02, 0.02, 0.02],
+    phase: 4.96,
+    scale: 0.046
+  },
+  {
+    id: 'core-front-left',
+    layer: 'core',
+    sensitive: 0.55,
+    base: [-0.3, 0.08, 0.24],
+    aligned: [-0.24, 0.12, 0.18],
+    wobble: [0.02, 0.02, 0.02],
+    phase: 5.24,
+    scale: 0.046
+  },
+  {
+    id: 'core-back-right',
+    layer: 'core',
+    sensitive: 0.55,
+    base: [0.22, -0.08, -0.28],
+    aligned: [0.2, -0.1, -0.18],
+    wobble: [0.02, 0.02, 0.02],
+    phase: 5.48,
+    scale: 0.046
+  },
+  {
+    id: 'core-back-left',
+    layer: 'core',
+    sensitive: 0.55,
+    base: [-0.24, -0.1, -0.3],
+    aligned: [-0.2, -0.1, -0.18],
+    wobble: [0.02, 0.02, 0.02],
+    phase: 5.74,
+    scale: 0.046
+  },
+  {
+    id: 'core-bottom',
+    layer: 'core',
+    sensitive: 0.5,
+    base: [0, -0.34, 0],
+    aligned: [0, -0.38, 0],
+    wobble: [0.02, 0.02, 0.02],
+    phase: 5.96,
+    scale: 0.05
   }
-};
-
-const GROUP_DEFINITIONS = [
-  { id: 'north', target: [0.02, 1.12, 0.26], radius: 0.92 },
-  { id: 'east', target: [1.16, 0.22, 0.34], radius: 0.9 },
-  { id: 'west', target: [-1.18, 0.18, 0.28], radius: 0.9 },
-  { id: 'south', target: [0.02, -1.02, 0.18], radius: 0.94 },
-  { id: 'rear', target: [0.12, -0.06, -0.92], radius: 0.88 },
-  { id: 'core', target: [0.02, 0.06, 0.32], radius: 0.72 }
 ];
 
-const TRACE_LINKS = [
-  { from: 0, to: 5, tone: 'ice', revealWeight: 0.08 },
-  { from: 1, to: 5, tone: 'cobalt', revealWeight: 0.1 },
-  { from: 2, to: 5, tone: 'cobalt', revealWeight: 0.1 },
-  { from: 3, to: 5, tone: 'ice', revealWeight: 0.08 },
-  { from: 4, to: 5, tone: 'violet', revealWeight: 0.12 },
-  { from: 0, to: 1, tone: 'cobalt', revealWeight: 0.02 },
-  { from: 0, to: 2, tone: 'cobalt', revealWeight: 0.02 },
-  { from: 3, to: 1, tone: 'violet', revealWeight: 0.04 },
-  { from: 3, to: 2, tone: 'violet', revealWeight: 0.04 }
+const SHELL_EDGES = [
+  [0, 1],
+  [0, 2],
+  [0, 8],
+  [1, 3],
+  [2, 4],
+  [1, 10],
+  [2, 10],
+  [1, 11],
+  [2, 11],
+  [3, 5],
+  [4, 6],
+  [3, 8],
+  [4, 8],
+  [5, 7],
+  [6, 7],
+  [5, 9],
+  [6, 9],
+  [7, 9],
+  [5, 12],
+  [6, 12]
 ];
 
-const FRAGMENT_DEFINITIONS = [
+const LATTICE_EDGES = [
+  [10, 11],
+  [11, 12],
+  [12, 13],
+  [13, 10],
+  [10, 14],
+  [10, 15],
+  [12, 14],
+  [12, 15],
+  [14, 3],
+  [15, 4],
+  [14, 11],
+  [15, 11],
+  [14, 13],
+  [15, 13],
+  [8, 13],
+  [9, 13],
+  [3, 11],
+  [4, 11],
+  [5, 14],
+  [6, 15]
+];
+
+const CORE_EDGES = [
+  [16, 17],
+  [16, 18],
+  [17, 18],
+  [17, 19],
+  [18, 20],
+  [19, 20],
+  [19, 21],
+  [20, 21],
+  [16, 13],
+  [21, 12],
+  [17, 11],
+  [18, 11]
+];
+
+const ALL_EDGES = [...SHELL_EDGES, ...LATTICE_EDGES, ...CORE_EDGES];
+const LATTICE_EDGE_OFFSET = SHELL_EDGES.length;
+const CORE_EDGE_OFFSET = SHELL_EDGES.length + LATTICE_EDGES.length;
+const CORE_INDICES = [16, 17, 18, 19, 20, 21];
+const SENSITIVE_INDICES = [1, 2, 5, 6, 10, 11, 12, 13];
+const ANCHOR_VISUAL_SLOTS = 4;
+
+const MODULE_DEFINITIONS = [
   {
-    id: 'rear-frame',
-    kind: 'frame',
-    group: 4,
-    tone: 'violet',
-    size: [2.74, 3.18, 0.06],
-    scatterPosition: [-1.24, 0.34, -1.24],
-    assembledPosition: [0.08, 0.02, -0.72],
-    scatterRotation: [0.62, -0.6, 0.36],
-    assembledRotation: [0.18, -0.16, 0.08],
-    sensitivity: 0.58,
-    assemblyWeight: 0.38,
-    revealWeight: 0.06,
-    phase: 0.12,
-    scatterScale: 0.96,
-    assembledScale: 1
+    nodeIndex: 10,
+    baseOffset: [0.34, 0.08, 0.12],
+    alignedOffset: [0.42, 0, 0.04],
+    baseRotation: [0.46, 0.38, 0.18],
+    alignedRotation: [0.14, 0.04, 0.52],
+    size: [0.36, 0.06, 0.18]
   },
   {
-    id: 'mid-frame',
-    kind: 'frame',
-    group: 5,
-    tone: 'cobalt',
-    size: [2.08, 2.46, 0.05],
-    scatterPosition: [1.02, -0.16, 0.88],
-    assembledPosition: [0.06, 0.04, -0.12],
-    scatterRotation: [-0.5, 0.76, -0.28],
-    assembledRotation: [-0.12, 0.12, -0.06],
-    sensitivity: 0.82,
-    assemblyWeight: 0.46,
-    revealWeight: 0.12,
-    phase: 0.34,
-    scatterScale: 0.94,
-    assembledScale: 1
+    nodeIndex: 11,
+    baseOffset: [-0.28, 0.12, 0.2],
+    alignedOffset: [-0.38, 0.02, 0.1],
+    baseRotation: [0.32, -0.48, 0.24],
+    alignedRotation: [0.12, 0.06, -0.42],
+    size: [0.28, 0.05, 0.16]
   },
   {
-    id: 'inner-frame',
-    kind: 'frame',
-    group: 5,
-    tone: 'ice',
-    size: [1.46, 1.82, 0.04],
-    scatterPosition: [0.44, 1.06, 1.02],
-    assembledPosition: [0.02, 0.06, 0.52],
-    scatterRotation: [0.44, -0.26, 0.48],
-    assembledRotation: [0.1, 0.18, 0.2],
-    sensitivity: 0.88,
-    assemblyWeight: 0.52,
-    revealWeight: 0.22,
-    phase: 0.58,
-    scatterScale: 0.9,
-    assembledScale: 1
+    nodeIndex: 12,
+    baseOffset: [0.26, -0.06, 0.14],
+    alignedOffset: [0.34, -0.02, 0.02],
+    baseRotation: [-0.26, 0.3, 0.36],
+    alignedRotation: [0.1, -0.04, 0.38],
+    size: [0.26, 0.05, 0.15]
   },
   {
-    id: 'north-plate',
-    kind: 'plate',
-    group: 0,
-    tone: 'ice',
-    size: [1.18, 0.28, 0.04],
-    scatterPosition: [-0.46, 1.48, 0.44],
-    assembledPosition: [0.02, 1.12, 0.22],
-    scatterRotation: [0.28, 0.42, -0.42],
-    assembledRotation: [0.04, 0.1, -0.04],
-    sensitivity: 0.72,
-    assemblyWeight: 0.3,
-    revealWeight: 0.04,
-    phase: 0.86,
-    scatterScale: 0.92,
-    assembledScale: 1
+    nodeIndex: 13,
+    baseOffset: [-0.22, 0.02, -0.22],
+    alignedOffset: [-0.3, 0, -0.12],
+    baseRotation: [0.38, 0.22, -0.34],
+    alignedRotation: [0.08, 0.18, 0.12],
+    size: [0.3, 0.05, 0.14]
   },
   {
-    id: 'south-plate',
-    kind: 'plate',
-    group: 3,
-    tone: 'ice',
-    size: [1.06, 0.24, 0.04],
-    scatterPosition: [0.74, -1.34, 0.72],
-    assembledPosition: [0, -1.04, 0.16],
-    scatterRotation: [-0.26, -0.52, 0.34],
-    assembledRotation: [-0.04, -0.08, 0.02],
-    sensitivity: 0.72,
-    assemblyWeight: 0.3,
-    revealWeight: 0.04,
-    phase: 1.08,
-    scatterScale: 0.92,
-    assembledScale: 1
+    nodeIndex: 14,
+    baseOffset: [0.18, 0.12, 0.18],
+    alignedOffset: [0.24, 0.04, 0.1],
+    baseRotation: [0.18, 0.56, 0.24],
+    alignedRotation: [0.08, 0.14, 0.56],
+    size: [0.22, 0.04, 0.12]
   },
   {
-    id: 'east-fin',
-    kind: 'plate',
-    group: 1,
-    tone: 'cobalt',
-    size: [0.42, 1.24, 0.04],
-    scatterPosition: [1.62, 0.58, -0.22],
-    assembledPosition: [1.06, 0.02, 0.3],
-    scatterRotation: [0.36, -0.62, 0.18],
-    assembledRotation: [0.08, -0.12, 0.14],
-    sensitivity: 0.86,
-    assemblyWeight: 0.34,
-    revealWeight: 0.06,
-    phase: 1.34,
-    scatterScale: 0.9,
-    assembledScale: 1
+    nodeIndex: 15,
+    baseOffset: [-0.18, -0.08, 0.2],
+    alignedOffset: [-0.24, 0.04, 0.1],
+    baseRotation: [-0.28, -0.5, -0.18],
+    alignedRotation: [0.06, -0.16, -0.54],
+    size: [0.22, 0.04, 0.12]
+  }
+];
+
+const SHELL_PANEL_DEFINITIONS = [
+  [0, 1, 10],
+  [0, 2, 10],
+  [7, 5, 12],
+  [7, 6, 12],
+  [1, 3, 14],
+  [2, 4, 15]
+];
+
+const LATTICE_PANEL_DEFINITIONS = [
+  [10, 11, 14],
+  [10, 11, 15],
+  [12, 13, 14],
+  [12, 13, 15]
+];
+
+const CORE_SHARD_DEFINITIONS = [
+  {
+    rotation: [Math.PI / 5.4, Math.PI / 4.8, 0.16],
+    revealRotation: [Math.PI / 2.8, Math.PI / 5.8, 0.42],
+    size: [0.56, 0.05, 0.14],
+    color: '#8bdfff',
+    emissive: '#2a94ff'
   },
   {
-    id: 'west-fin',
-    kind: 'plate',
-    group: 2,
-    tone: 'cobalt',
-    size: [0.42, 1.32, 0.04],
-    scatterPosition: [-1.58, -0.42, 0.62],
-    assembledPosition: [-1.08, -0.02, 0.26],
-    scatterRotation: [-0.34, 0.58, -0.22],
-    assembledRotation: [-0.08, 0.14, -0.16],
-    sensitivity: 0.86,
-    assemblyWeight: 0.34,
-    revealWeight: 0.06,
-    phase: 1.58,
-    scatterScale: 0.9,
-    assembledScale: 1
+    rotation: [-Math.PI / 6.2, -Math.PI / 4.2, -0.24],
+    revealRotation: [-Math.PI / 2.9, -Math.PI / 6.6, -0.46],
+    size: [0.48, 0.045, 0.12],
+    color: '#9a7dff',
+    emissive: '#6e49ff'
   },
   {
-    id: 'rear-slice',
-    kind: 'plate',
-    group: 4,
-    tone: 'violet',
-    size: [1.02, 0.44, 0.04],
-    scatterPosition: [0.44, -0.74, -1.46],
-    assembledPosition: [0.12, -0.16, -0.94],
-    scatterRotation: [0.52, 0.18, 0.5],
-    assembledRotation: [0.14, 0.04, 0.06],
-    sensitivity: 0.66,
-    assemblyWeight: 0.32,
-    revealWeight: 0.08,
-    phase: 1.84,
-    scatterScale: 0.9,
-    assembledScale: 1
-  },
-  {
-    id: 'front-slice',
-    kind: 'plate',
-    group: 5,
-    tone: 'ice',
-    size: [0.84, 0.36, 0.04],
-    scatterPosition: [-0.14, 0.28, 1.3],
-    assembledPosition: [0, 0.14, 0.82],
-    scatterRotation: [-0.22, -0.12, 0.3],
-    assembledRotation: [0.02, 0.02, -0.04],
-    sensitivity: 0.78,
-    assemblyWeight: 0.36,
-    revealWeight: 0.18,
-    phase: 2.08,
-    scatterScale: 0.88,
-    assembledScale: 1
-  },
-  {
-    id: 'east-prism',
-    kind: 'prism',
-    group: 1,
-    tone: 'cobalt',
-    size: [0.24, 0.84, 0.18],
-    scatterPosition: [1.88, -0.18, 0.92],
-    assembledPosition: [0.84, 0.3, 0.54],
-    scatterRotation: [0.72, -0.2, 0.58],
-    assembledRotation: [0.18, -0.12, 0.24],
-    sensitivity: 0.86,
-    assemblyWeight: 0.38,
-    revealWeight: 0.12,
-    phase: 2.32,
-    scatterScale: 0.88,
-    assembledScale: 1
-  },
-  {
-    id: 'west-prism',
-    kind: 'prism',
-    group: 2,
-    tone: 'cobalt',
-    size: [0.24, 0.76, 0.18],
-    scatterPosition: [-1.9, 0.22, -0.42],
-    assembledPosition: [-0.84, 0.28, 0.46],
-    scatterRotation: [-0.66, 0.22, -0.54],
-    assembledRotation: [-0.16, 0.12, -0.22],
-    sensitivity: 0.86,
-    assemblyWeight: 0.38,
-    revealWeight: 0.12,
-    phase: 2.56,
-    scatterScale: 0.88,
-    assembledScale: 1
-  },
-  {
-    id: 'south-prism',
-    kind: 'prism',
-    group: 3,
-    tone: 'violet',
-    size: [0.2, 0.92, 0.18],
-    scatterPosition: [0.16, -1.82, -0.32],
-    assembledPosition: [0.04, -0.74, 0.42],
-    scatterRotation: [0.28, -0.66, 0.2],
-    assembledRotation: [0.06, -0.1, 0.14],
-    sensitivity: 0.78,
-    assemblyWeight: 0.34,
-    revealWeight: 0.08,
-    phase: 2.82,
-    scatterScale: 0.9,
-    assembledScale: 1
-  },
-  {
-    id: 'north-prism',
-    kind: 'prism',
-    group: 0,
-    tone: 'violet',
-    size: [0.18, 0.72, 0.16],
-    scatterPosition: [-0.72, 1.86, -0.12],
-    assembledPosition: [0, 0.86, 0.42],
-    scatterRotation: [-0.2, 0.6, -0.28],
-    assembledRotation: [-0.04, 0.1, -0.16],
-    sensitivity: 0.78,
-    assemblyWeight: 0.34,
-    revealWeight: 0.08,
-    phase: 3.06,
-    scatterScale: 0.9,
-    assembledScale: 1
-  },
-  {
-    id: 'right-strut',
-    kind: 'slat',
-    group: 1,
-    tone: 'ice',
-    size: [0.92, 0.06, 0.08],
-    scatterPosition: [1.34, 0.92, -0.74],
-    assembledPosition: [0.62, 0.12, 0.02],
-    scatterRotation: [0.12, -0.38, 0.64],
-    assembledRotation: [0.02, 0.06, 0.24],
-    sensitivity: 0.72,
-    assemblyWeight: 0.3,
-    revealWeight: 0.04,
-    phase: 3.28,
-    scatterScale: 0.94,
-    assembledScale: 1
-  },
-  {
-    id: 'left-strut',
-    kind: 'slat',
-    group: 2,
-    tone: 'ice',
-    size: [0.88, 0.06, 0.08],
-    scatterPosition: [-1.44, -0.9, 0.96],
-    assembledPosition: [-0.58, 0.04, 0.02],
-    scatterRotation: [-0.14, 0.34, -0.62],
-    assembledRotation: [-0.02, -0.06, -0.22],
-    sensitivity: 0.72,
-    assemblyWeight: 0.3,
-    revealWeight: 0.04,
-    phase: 3.54,
-    scatterScale: 0.94,
-    assembledScale: 1
-  },
-  {
-    id: 'rear-needle',
-    kind: 'slat',
-    group: 4,
-    tone: 'violet',
-    size: [0.08, 1.12, 0.08],
-    scatterPosition: [0.82, 0.76, -1.8],
-    assembledPosition: [0.22, 0.14, -0.44],
-    scatterRotation: [0.42, 0.18, -0.28],
-    assembledRotation: [0.08, 0.02, -0.04],
-    sensitivity: 0.62,
-    assemblyWeight: 0.28,
-    revealWeight: 0.04,
-    phase: 3.78,
-    scatterScale: 0.9,
-    assembledScale: 1
+    rotation: [Math.PI / 3.8, -Math.PI / 6.4, 0.36],
+    revealRotation: [Math.PI / 2.4, -Math.PI / 4.8, 0.14],
+    size: [0.36, 0.04, 0.1],
+    color: '#f1f8ff',
+    emissive: '#8ccfff'
   }
 ];
 
@@ -343,117 +395,308 @@ function createDustField(count, spread) {
   const positions = new Float32Array(count * 3);
 
   for (let index = 0; index < count; index += 1) {
-    const radius = spread * (0.5 + Math.random() * 0.72);
+    const radius = spread * (0.45 + Math.random() * 0.7);
     const theta = Math.random() * Math.PI * 2;
     const phi = Math.acos(2 * Math.random() - 1);
 
     positions[index * 3] = radius * Math.sin(phi) * Math.cos(theta);
-    positions[index * 3 + 1] = radius * Math.cos(phi) * 0.82;
+    positions[index * 3 + 1] = radius * Math.cos(phi) * 0.76;
     positions[index * 3 + 2] = radius * Math.sin(phi) * Math.sin(theta);
   }
 
   return positions;
 }
 
-function buildGroupDistances(groups) {
-  return groups.map((group) =>
-    groups.map((other) =>
-      Math.hypot(
-        group.target[0] - other.target[0],
-        group.target[1] - other.target[1],
-        group.target[2] - other.target[2]
-      )
-    )
-  );
+function buildGraphDepths(count, edges) {
+  const adjacency = Array.from({ length: count }, () => []);
+
+  edges.forEach(([from, to]) => {
+    adjacency[from].push(to);
+    adjacency[to].push(from);
+  });
+
+  return Array.from({ length: count }, (_, start) => {
+    const depths = new Array(count).fill(Infinity);
+    const queue = [start];
+    depths[start] = 0;
+
+    while (queue.length) {
+      const current = queue.shift();
+      const currentDepth = depths[current];
+
+      adjacency[current].forEach((next) => {
+        if (depths[next] !== Infinity) {
+          return;
+        }
+
+        depths[next] = currentDepth + 1;
+        queue.push(next);
+      });
+    }
+
+    return depths;
+  });
 }
 
-const GROUP_DISTANCES = buildGroupDistances(GROUP_DEFINITIONS);
+const GRAPH_DEPTHS = buildGraphDepths(NODE_DEFINITIONS.length, ALL_EDGES);
+
+function writeEdgeBuffers({
+  edges,
+  positions,
+  charges,
+  edgeBoosts = [],
+  memoryBoosts = [],
+  posArray,
+  colorArray,
+  opacityBias,
+  palette
+}) {
+  const edgeColor = new Color();
+
+  edges.forEach(([from, to], index) => {
+    const fromPosition = positions[from];
+    const toPosition = positions[to];
+    const vertexIndex = index * 6;
+    const colorIndex = index * 6;
+    const energy =
+      (charges[from] + charges[to]) * 0.5 +
+      (edgeBoosts[index] ?? 0) * 1.34 +
+      (memoryBoosts[index] ?? 0) * 0.46 +
+      (NODE_DEFINITIONS[from].layer === 'core' || NODE_DEFINITIONS[to].layer === 'core' ? 0.16 : 0);
+
+    posArray[vertexIndex] = fromPosition.x;
+    posArray[vertexIndex + 1] = fromPosition.y;
+    posArray[vertexIndex + 2] = fromPosition.z;
+    posArray[vertexIndex + 3] = toPosition.x;
+    posArray[vertexIndex + 4] = toPosition.y;
+    posArray[vertexIndex + 5] = toPosition.z;
+
+    edgeColor.copy(palette.base).lerp(palette.hot, Math.min(1, energy * 0.82 + opacityBias));
+
+    colorArray[colorIndex] = edgeColor.r;
+    colorArray[colorIndex + 1] = edgeColor.g;
+    colorArray[colorIndex + 2] = edgeColor.b;
+    colorArray[colorIndex + 3] = edgeColor.r;
+    colorArray[colorIndex + 4] = edgeColor.g;
+    colorArray[colorIndex + 5] = edgeColor.b;
+  });
+}
+
+function writePanelBuffers({
+  panels,
+  positions,
+  charges,
+  memoryBoosts = [],
+  posArray,
+  colorArray,
+  opacityBias,
+  palette
+}) {
+  const panelColor = new Color();
+
+  panels.forEach(([a, b, c], index) => {
+    const aPosition = positions[a];
+    const bPosition = positions[b];
+    const cPosition = positions[c];
+    const vertexIndex = index * 9;
+    const colorIndex = index * 9;
+    const energy =
+      (charges[a] + charges[b] + charges[c]) / 3 +
+      (memoryBoosts[index] ?? 0) * 0.6 +
+      (NODE_DEFINITIONS[a].layer === 'core' ||
+      NODE_DEFINITIONS[b].layer === 'core' ||
+      NODE_DEFINITIONS[c].layer === 'core'
+        ? 0.12
+        : 0);
+
+    posArray[vertexIndex] = aPosition.x;
+    posArray[vertexIndex + 1] = aPosition.y;
+    posArray[vertexIndex + 2] = aPosition.z;
+    posArray[vertexIndex + 3] = bPosition.x;
+    posArray[vertexIndex + 4] = bPosition.y;
+    posArray[vertexIndex + 5] = bPosition.z;
+    posArray[vertexIndex + 6] = cPosition.x;
+    posArray[vertexIndex + 7] = cPosition.y;
+    posArray[vertexIndex + 8] = cPosition.z;
+
+    panelColor.copy(palette.base).lerp(palette.hot, Math.min(1, energy * 0.74 + opacityBias));
+
+    colorArray[colorIndex] = panelColor.r;
+    colorArray[colorIndex + 1] = panelColor.g;
+    colorArray[colorIndex + 2] = panelColor.b;
+    colorArray[colorIndex + 3] = panelColor.r;
+    colorArray[colorIndex + 4] = panelColor.g;
+    colorArray[colorIndex + 5] = panelColor.b;
+    colorArray[colorIndex + 6] = panelColor.r;
+    colorArray[colorIndex + 7] = panelColor.g;
+    colorArray[colorIndex + 8] = panelColor.b;
+  });
+}
 
 function StaticAura() {
   return (
     <div className="absolute inset-0 overflow-hidden">
-      <div className="absolute left-1/2 top-1/2 h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-[2.7rem] bg-violet/16 blur-[90px]" />
-      <div className="absolute left-1/2 top-1/2 h-56 w-44 -translate-x-1/2 -translate-y-1/2 rotate-6 rounded-[2.3rem] border border-white/10" />
-      <div className="absolute left-1/2 top-1/2 h-44 w-60 -translate-x-1/2 -translate-y-1/2 -rotate-[10deg] rounded-[2rem] border border-cobalt/25" />
-      <div className="absolute left-[28%] top-[26%] h-36 w-24 rotate-12 rounded-[1.2rem] border border-white/[0.08] bg-white/[0.02]" />
-      <div className="absolute right-[24%] top-[34%] h-28 w-20 -rotate-[14deg] rounded-[1rem] border border-cobalt/20 bg-cobalt/[0.06]" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.06),transparent_38%),radial-gradient(circle_at_34%_26%,rgba(130,121,255,0.16),transparent_24%),radial-gradient(circle_at_69%_41%,rgba(55,168,255,0.14),transparent_22%)]" />
+      <div className="absolute left-1/2 top-1/2 h-60 w-60 -translate-x-1/2 -translate-y-1/2 rounded-full bg-violet/20 blur-[86px]" />
+      <div className="absolute left-1/2 top-1/2 h-44 w-44 -translate-x-1/2 -translate-y-1/2 rounded-[2rem] border border-cobalt/25 bg-cobalt/6 rotate-12" />
+      <div className="absolute left-1/2 top-1/2 h-40 w-40 -translate-x-1/2 -translate-y-1/2 rounded-[1.6rem] border border-white/10 -rotate-12" />
+      <div className="absolute inset-[16%] border border-white/[0.06] [clip-path:polygon(50%_0%,88%_22%,100%_54%,74%_100%,26%_100%,0%_54%,12%_22%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08),transparent_35%),radial-gradient(circle_at_38%_28%,rgba(130,121,255,0.18),transparent_24%),radial-gradient(circle_at_68%_44%,rgba(55,168,255,0.16),transparent_22%)]" />
     </div>
   );
 }
 
-function AssemblyField({ compact, interaction }) {
+function ResonanceLattice({ compact, interaction }) {
   const rootRef = useRef(null);
   const dustRef = useRef(null);
-  const fragmentGroupRefs = useRef([]);
-  const surfaceMaterialRefs = useRef([]);
-  const outlineMaterialRefs = useRef([]);
-  const accentMaterialRefs = useRef([]);
-  const tracePositionRefs = useRef([]);
-  const traceMaterialRefs = useRef([]);
+  const flowRefs = useRef([]);
+  const flowMaterials = useRef([]);
+  const nodeCoreRefs = useRef([]);
+  const nodeGlowRefs = useRef([]);
+  const nodeMaterials = useRef([]);
+  const nodeGlowMaterials = useRef([]);
   const anchorGroupRefs = useRef([]);
-  const anchorOutlineRefs = useRef([]);
-  const anchorCrossRefs = useRef([]);
-  const anchorPlaneRefs = useRef([]);
-  const revealGroupRef = useRef(null);
-  const revealFrameRef = useRef(null);
-  const revealFrameSecondaryRef = useRef(null);
-  const revealPlaneMaterials = useRef([]);
-  const revealCoreRef = useRef(null);
-  const revealCoreMaterialRef = useRef(null);
-  const revealBraceRefs = useRef([]);
-  const revealBraceMaterials = useRef([]);
-  const revealLightRef = useRef(null);
-  const fragmentPositionsRef = useRef(FRAGMENT_DEFINITIONS.map(() => new Vector3()));
-  const groupCentersRef = useRef(
-    GROUP_DEFINITIONS.map((group) => new Vector3(group.target[0], group.target[1], group.target[2]))
+  const anchorOuterRingRefs = useRef([]);
+  const anchorOuterMaterials = useRef([]);
+  const anchorInnerRingRefs = useRef([]);
+  const anchorInnerMaterials = useRef([]);
+  const anchorHaloRefs = useRef([]);
+  const anchorHaloMaterials = useRef([]);
+  const moduleRefs = useRef([]);
+  const moduleMaterials = useRef([]);
+  const coreShardRefs = useRef([]);
+  const coreShardMaterials = useRef([]);
+  const chamberRef = useRef(null);
+  const chamberPlaneMaterials = useRef([]);
+  const chamberRingRefs = useRef([]);
+  const chamberRingMaterials = useRef([]);
+  const coreSeedRef = useRef(null);
+  const coreSeedMaterialRef = useRef(null);
+  const coreHaloRef = useRef(null);
+  const coreHaloMaterialRef = useRef(null);
+  const innerLightRef = useRef(null);
+  const shellPositionRef = useRef(null);
+  const shellColorRef = useRef(null);
+  const shellPanelPositionRef = useRef(null);
+  const shellPanelColorRef = useRef(null);
+  const latticePositionRef = useRef(null);
+  const latticeColorRef = useRef(null);
+  const latticePanelPositionRef = useRef(null);
+  const latticePanelColorRef = useRef(null);
+  const corePositionRef = useRef(null);
+  const coreColorRef = useRef(null);
+  const shellMaterialRef = useRef(null);
+  const shellPanelMaterialRef = useRef(null);
+  const latticeMaterialRef = useRef(null);
+  const latticePanelMaterialRef = useRef(null);
+  const coreMaterialRef = useRef(null);
+  const [dust] = useState(() => createDustField(compact ? 110 : 180, compact ? 5.6 : 6.8));
+  const [shellPositions] = useState(() => new Float32Array(SHELL_EDGES.length * 6));
+  const [shellColors] = useState(() => new Float32Array(SHELL_EDGES.length * 6));
+  const [shellPanelPositions] = useState(
+    () => new Float32Array(SHELL_PANEL_DEFINITIONS.length * 9)
   );
+  const [shellPanelColors] = useState(
+    () => new Float32Array(SHELL_PANEL_DEFINITIONS.length * 9)
+  );
+  const [latticePositions] = useState(() => new Float32Array(LATTICE_EDGES.length * 6));
+  const [latticeColors] = useState(() => new Float32Array(LATTICE_EDGES.length * 6));
+  const [latticePanelPositions] = useState(
+    () => new Float32Array(LATTICE_PANEL_DEFINITIONS.length * 9)
+  );
+  const [latticePanelColors] = useState(
+    () => new Float32Array(LATTICE_PANEL_DEFINITIONS.length * 9)
+  );
+  const [corePositions] = useState(() => new Float32Array(CORE_EDGES.length * 6));
+  const [coreColors] = useState(() => new Float32Array(CORE_EDGES.length * 6));
+  const nodePositionsRef = useRef(NODE_DEFINITIONS.map(() => new Vector3()));
+  const nodeResidueRef = useRef(NODE_DEFINITIONS.map(() => 0));
+  const edgeResidueRef = useRef(ALL_EDGES.map(() => 0));
+  const focusRef = useRef({
+    primary: -1,
+    secondary: -1,
+    primaryStrength: 0,
+    secondaryStrength: 0
+  });
+  const anchorsRef = useRef([]);
   const systemRef = useRef({
     memory: 0,
     memoryTarget: 0,
-    assembly: 0,
-    reveal: 0,
-    phaseLift: 0
+    structured: 0,
+    chamber: 0,
+    phaseFlash: 0,
+    unlockPulse: 0,
+    shock: 0,
+    coreUnlocked: false
   });
-  const anchorsRef = useRef([]);
-  const [dust] = useState(() => createDustField(compact ? 90 : 140, compact ? 5.6 : 6.6));
-  const [traceBuffers] = useState(() => TRACE_LINKS.map(() => new Float32Array(6)));
-  const tempProbe = useMemo(() => new Vector3(), []);
   const tempVector = useMemo(() => new Vector3(), []);
 
   useEffect(() => {
-    tracePositionRefs.current.forEach((attribute) => attribute?.setUsage(DynamicDrawUsage));
+    [
+      shellPositionRef,
+      shellColorRef,
+      shellPanelPositionRef,
+      shellPanelColorRef,
+      latticePositionRef,
+      latticeColorRef,
+      latticePanelPositionRef,
+      latticePanelColorRef,
+      corePositionRef,
+      coreColorRef
+    ].forEach((ref) => ref.current?.setUsage(DynamicDrawUsage));
   }, []);
 
   useFrame((state, delta) => {
     const elapsed = state.clock.getElapsedTime();
     const pointer = interaction.current;
     const system = systemRef.current;
+    const positions = nodePositionsRef.current;
 
-    pointer.currentX = MathUtils.lerp(pointer.currentX, pointer.targetX, 0.08);
-    pointer.currentY = MathUtils.lerp(pointer.currentY, pointer.targetY, 0.08);
-    pointer.speed = MathUtils.damp(pointer.speed, 0, 3.2, delta);
+    pointer.currentX = MathUtils.lerp(pointer.currentX, pointer.targetX, 0.075);
+    pointer.currentY = MathUtils.lerp(pointer.currentY, pointer.targetY, 0.075);
+    pointer.speed = MathUtils.damp(pointer.speed, 0, 3.6, delta);
+    pointer.field = MathUtils.lerp(pointer.field, pointer.inside ? 1 : 0, 0.05);
+    pointer.dragX = MathUtils.damp(
+      pointer.dragX,
+      pointer.dragging ? pointer.dragTargetX : 0,
+      5.2,
+      delta
+    );
+    pointer.dragY = MathUtils.damp(
+      pointer.dragY,
+      pointer.dragging ? pointer.dragTargetY : 0,
+      5.2,
+      delta
+    );
+    pointer.dragTargetX = MathUtils.damp(pointer.dragTargetX, 0, 5.8, delta);
+    pointer.dragTargetY = MathUtils.damp(pointer.dragTargetY, 0, 5.8, delta);
 
-    const probe = tempProbe.set(pointer.currentX * 1.92, pointer.currentY * 1.28, 0.2);
+    system.memoryTarget = Math.max(0, system.memoryTarget - delta * 0.043);
+    system.memory = MathUtils.damp(system.memory, system.memoryTarget, 2.8, delta);
+    system.phaseFlash = Math.max(0, system.phaseFlash - delta * 1.05);
+    system.unlockPulse = Math.max(0, system.unlockPulse - delta * 0.54);
+    system.shock = Math.max(0, system.shock - delta * 1.12);
 
-    system.memoryTarget = Math.max(0, system.memoryTarget - delta * 0.028);
-    system.memory = MathUtils.damp(system.memory, system.memoryTarget, 2.2, delta);
-    system.phaseLift = Math.max(0, system.phaseLift - delta * 0.82);
+    const probe = tempVector.set(pointer.currentX * 1.8, pointer.currentY * 1.22, 0.2);
+    const charges = new Array(NODE_DEFINITIONS.length).fill(0);
+    const structuralImpulses = new Array(NODE_DEFINITIONS.length).fill(0);
+    const memoryMarks = new Array(NODE_DEFINITIONS.length).fill(0);
+    const edgeFlowStrengths = new Array(ALL_EDGES.length).fill(0);
+    const edgeFlowProgress = new Array(ALL_EDGES.length).fill(0.5);
+    const edgeMemory = new Array(ALL_EDGES.length).fill(0);
 
     anchorsRef.current = anchorsRef.current
       .map((anchor) => {
         const nextAge = anchor.age + delta;
         const strength = Math.max(0, 1 - nextAge / anchor.life);
-        const settle = Math.max(0, 1 - nextAge / 2.8);
 
         return {
           ...anchor,
           age: nextAge,
           strength,
-          settle
+          pulse: Math.max(0, anchor.pulse - delta * (anchor.core ? 0.74 : 0.9))
         };
       })
-      .filter((anchor) => anchor.strength > 0.02);
+      .filter((anchor) => anchor.strength > 0.01);
 
     const activeAnchors = anchorsRef.current;
 
@@ -462,785 +705,1031 @@ function AssemblyField({ compact, interaction }) {
       pointer.clickQueue.length = 0;
 
       queue.forEach((click) => {
-        const clickProbe = tempVector.set(click.x * 1.92, click.y * 1.28, 0.2);
-        const candidates = GROUP_DEFINITIONS.map((group, groupIndex) => ({
-          groupIndex,
-          distance: Math.hypot(group.target[0] - clickProbe.x, group.target[1] - clickProbe.y)
-        })).sort((left, right) => right.distance - left.distance).reverse();
-        const picked =
-          candidates.find(
-            (candidate) => candidate.groupIndex !== CORE_GROUP_INDEX || system.assembly > 0.44
-          ) ?? candidates[0];
-        const existing = activeAnchors.find((anchor) => anchor.groupIndex === picked.groupIndex);
+        const allowCore = system.chamber > 0.54 && Math.hypot(click.x, click.y) < 0.42;
+        let targetNode = focusRef.current.primary;
+        let coreAnchor = false;
 
-        if (existing) {
-          existing.age = 0;
-          existing.strength = 1;
-          existing.settle = 1;
-          existing.life = picked.groupIndex === CORE_GROUP_INDEX ? 12.5 : 9.2;
-        } else {
-          activeAnchors.unshift({
-            groupIndex: picked.groupIndex,
-            age: 0,
-            strength: 1,
-            settle: 1,
-            life: picked.groupIndex === CORE_GROUP_INDEX ? 12.5 : 9.2
-          });
+        if (allowCore) {
+          coreAnchor = true;
+          targetNode = CORE_INDICES.reduce((best, nodeIndex) => {
+            const candidate = positions[nodeIndex];
+            const distance = Math.hypot(candidate.x - click.x * 1.8, candidate.y - click.y * 1.22);
+            const bestDistance = Math.hypot(
+              positions[best].x - click.x * 1.8,
+              positions[best].y - click.y * 1.22
+            );
+
+            return distance < bestDistance ? nodeIndex : best;
+          }, CORE_INDICES[0]);
+        } else if (targetNode < 0) {
+          targetNode = SENSITIVE_INDICES.reduce((best, nodeIndex) => {
+            const candidate = positions[nodeIndex];
+            const distance = Math.hypot(candidate.x - click.x * 1.8, candidate.y - click.y * 1.22);
+            const bestDistance = Math.hypot(
+              positions[best].x - click.x * 1.8,
+              positions[best].y - click.y * 1.22
+            );
+
+            return distance < bestDistance ? nodeIndex : best;
+          }, SENSITIVE_INDICES[0]);
         }
 
-        if (activeAnchors.length > ANCHOR_VISUAL_SLOTS) {
-          activeAnchors.length = ANCHOR_VISUAL_SLOTS;
-        }
+        if (targetNode >= 0) {
+          const existing = activeAnchors.find((anchor) => anchor.nodeIndex === targetNode);
 
-        system.memoryTarget = Math.min(
-          1,
-          system.memoryTarget + (picked.groupIndex === CORE_GROUP_INDEX ? 0.14 : 0.22)
-        );
-        system.phaseLift = Math.min(1, system.phaseLift + 0.56);
+          if (existing) {
+            existing.age = 0;
+            existing.strength = 1;
+            existing.pulse = 1;
+            existing.core = existing.core || coreAnchor;
+            existing.life = coreAnchor ? 15 : 10.5;
+          } else {
+            activeAnchors.unshift({
+              nodeIndex: targetNode,
+              strength: 1,
+              age: 0,
+              pulse: 1,
+              life: coreAnchor ? 15 : 10.5,
+              core: coreAnchor
+            });
+          }
+
+          if (activeAnchors.length > 4) {
+            activeAnchors.length = 4;
+          }
+
+          system.memoryTarget = Math.min(1, system.memoryTarget + (coreAnchor ? 0.4 : 0.22));
+          system.phaseFlash = Math.min(1, system.phaseFlash + (coreAnchor ? 1 : 0.58));
+          system.shock = Math.min(1, system.shock + (coreAnchor ? 0.92 : 0.6));
+        }
       });
     }
 
-    const groupPointer = GROUP_DEFINITIONS.map((group) => {
-      const distance = Math.hypot(group.target[0] - probe.x, group.target[1] - probe.y);
-      return Math.max(0, 1 - distance / group.radius);
-    });
+    const pointerPresence = Math.max(pointer.field * 0.55, Math.min(pointer.speed * 1.1, 0.45));
+    const anchorPresence = activeAnchors.reduce(
+      (sum, anchor) => sum + anchor.strength * (anchor.core ? 0.22 : 0.16),
+      0
+    );
+    const anchorCoreActive = activeAnchors.some((anchor) => anchor.core);
+    const structuredTarget = Math.min(
+      1,
+      system.memory * 0.84 + anchorPresence * 0.68 + (anchorCoreActive ? 0.24 : 0)
+    );
+    const chamberTarget = MathUtils.clamp((structuredTarget - 0.34) / 0.4, 0, 1);
 
-    const groupAnchorBoost = GROUP_DEFINITIONS.map((_, groupIndex) => {
-      let boost = 0;
+    system.structured = MathUtils.damp(system.structured, structuredTarget, 2.6, delta);
+    system.chamber = MathUtils.damp(system.chamber, chamberTarget, 2.2, delta);
+
+    const nextCoreUnlocked = system.chamber > 0.48;
+
+    if (nextCoreUnlocked && !system.coreUnlocked) {
+      system.unlockPulse = 1;
+      system.phaseFlash = Math.min(1, system.phaseFlash + 0.88);
+    }
+
+    system.coreUnlocked = nextCoreUnlocked;
+    const awakenedPhase = MathUtils.clamp((pointerPresence + system.memory * 0.58 - 0.08) / 0.24, 0, 1);
+    const resonantPhase = MathUtils.clamp((anchorPresence + system.memory * 0.76 - 0.16) / 0.28, 0, 1);
+    const structuredPhase = MathUtils.clamp((system.structured - 0.22) / 0.4, 0, 1);
+    const corePhase = MathUtils.clamp((system.chamber - 0.42) / 0.32 + system.unlockPulse * 0.18, 0, 1);
+
+    let bestIndex = -1;
+    let bestScore = 0;
+    let secondIndex = -1;
+    let secondScore = 0;
+
+    NODE_DEFINITIONS.forEach((node, index) => {
+      const base = node.base;
+      const wobbleX = Math.sin(elapsed * 0.72 + node.phase) * node.wobble[0];
+      const wobbleY = Math.cos(elapsed * 0.68 + node.phase * 1.1) * node.wobble[1];
+      const pointerDistance = Math.hypot(base[0] + wobbleX - probe.x, base[1] + wobbleY - probe.y);
+      const localFocus = Math.max(0, 1 - pointerDistance / (node.layer === 'core' ? 0.5 : 0.82));
+      const selectiveFocus =
+        localFocus *
+        node.sensitive *
+        (node.layer === 'core' ? MathUtils.clamp((system.chamber - 0.36) / 0.5, 0, 1) : 1);
+
+      if (selectiveFocus > bestScore) {
+        secondScore = bestScore;
+        secondIndex = bestIndex;
+        bestScore = selectiveFocus;
+        bestIndex = index;
+      } else if (selectiveFocus > secondScore) {
+        secondScore = selectiveFocus;
+        secondIndex = index;
+      }
+
+      let graphCharge = selectiveFocus * 0.75;
+      let structuralImpulse = selectiveFocus * 0.28;
+      let memoryMark = selectiveFocus * 0.14;
 
       activeAnchors.forEach((anchor) => {
-        const distance = GROUP_DISTANCES[anchor.groupIndex][groupIndex];
-        const falloff = Math.exp(-distance * (anchor.groupIndex === groupIndex ? 0.2 : 1.18));
-        boost += anchor.strength * falloff * (anchor.groupIndex === groupIndex ? 1.08 : 0.62);
+        const depth = GRAPH_DEPTHS[anchor.nodeIndex][index];
+
+        if (depth === Infinity) {
+          return;
+        }
+
+        const falloff = Math.exp(-depth * (anchor.core ? 0.58 : 0.84));
+        graphCharge += anchor.strength * falloff * (anchor.core ? 1.18 : 0.84);
+        structuralImpulse += anchor.pulse * Math.exp(-depth * (anchor.core ? 0.52 : 0.76)) * (anchor.core ? 1.12 : 0.88);
+        memoryMark += anchor.strength * Math.exp(-depth * 0.96) * (anchor.core ? 0.94 : 0.72);
       });
 
-      return Math.min(1.2, boost);
+      charges[index] = graphCharge;
+      structuralImpulses[index] = structuralImpulse;
+      memoryMarks[index] = Math.min(1, memoryMark);
     });
 
-    const activeGroups = new Set(
-      activeAnchors
-        .filter((anchor) => anchor.groupIndex !== CORE_GROUP_INDEX)
-        .map((anchor) => anchor.groupIndex)
-    ).size;
-    const pointerSweep =
-      [...groupPointer]
-        .sort((left, right) => right - left)
-        .slice(0, 2)
-        .reduce((sum, value) => sum + value, 0) / 2;
-    const anchorSweep = Math.min(
-      1,
-      groupAnchorBoost.reduce((sum, value) => sum + value, 0) * 0.16
-    );
-    const assemblyTarget = Math.min(
-      1,
-      system.memory * 0.62 + pointerSweep * 0.28 + anchorSweep * 0.58 + activeGroups * 0.06
-    );
-    const revealTarget = MathUtils.clamp(
-      (assemblyTarget - 0.56) / 0.22 + Math.max(0, activeGroups - 2) * 0.16,
-      0,
-      1
-    );
+    const nodeResidues = nodeResidueRef.current;
 
-    system.assembly = MathUtils.damp(system.assembly, assemblyTarget, 2.3, delta);
-    system.reveal = MathUtils.damp(system.reveal, revealTarget, 2.05, delta);
-
-    const groupSums = GROUP_DEFINITIONS.map(() => new Vector3());
-    const groupCounts = GROUP_DEFINITIONS.map(() => 0);
-    const groupState = GROUP_DEFINITIONS.map((_, groupIndex) =>
-      Math.min(
+    NODE_DEFINITIONS.forEach((_, index) => {
+      const residueTarget = Math.min(
         1,
-        groupPointer[groupIndex] * 0.56 +
-          groupAnchorBoost[groupIndex] * 0.82 +
-          system.assembly * (groupIndex === CORE_GROUP_INDEX ? 0.34 : 0.24)
-      )
+        memoryMarks[index] * 0.92 + structuralImpulses[index] * 0.32 + charges[index] * 0.08
+      );
+
+      nodeResidues[index] = MathUtils.damp(
+        nodeResidues[index],
+        residueTarget,
+        residueTarget > nodeResidues[index] ? 8 : 1.1,
+        delta
+      );
+    });
+
+    focusRef.current.primary = bestIndex;
+    focusRef.current.secondary = secondIndex;
+    focusRef.current.primaryStrength = bestScore;
+    focusRef.current.secondaryStrength = secondScore;
+
+    ALL_EDGES.forEach(([from, to], edgeIndex) => {
+      let strongestWave = 0;
+      let strongestProgress = 0.5;
+      let residual = Math.min(0.48, (memoryMarks[from] + memoryMarks[to]) * 0.22);
+
+      activeAnchors.forEach((anchor) => {
+        const depthFrom = GRAPH_DEPTHS[anchor.nodeIndex][from];
+        const depthTo = GRAPH_DEPTHS[anchor.nodeIndex][to];
+
+        if (depthFrom === Infinity || depthTo === Infinity) {
+          return;
+        }
+
+        const minDepth = Math.min(depthFrom, depthTo);
+        const maxDepth = Math.max(depthFrom, depthTo);
+        const centerDepth = (depthFrom + depthTo) * 0.5;
+        const front = anchor.age * (anchor.core ? 2.55 : 3.15) + anchor.pulse * 0.42;
+        const width = anchor.core ? 0.88 : 0.74;
+        const wave = Math.exp(-((centerDepth - front) ** 2) / (width * width));
+        const strength =
+          wave *
+          (0.18 + anchor.strength * 0.86 + anchor.pulse * 0.76) *
+          (anchor.core ? 1.12 : 0.98);
+
+        residual += anchor.strength * Math.exp(-maxDepth * 1.02) * (anchor.core ? 0.1 : 0.06);
+
+        if (strength > strongestWave) {
+          strongestWave = strength;
+
+          if (maxDepth - minDepth < 0.001) {
+            strongestProgress = 0.5 + Math.sin(elapsed * 2.4 + edgeIndex * 0.7) * 0.14;
+          } else {
+            const segmentProgress = MathUtils.clamp(
+              (front - minDepth) / Math.max(0.001, maxDepth - minDepth),
+              0,
+              1
+            );
+
+            strongestProgress = depthFrom <= depthTo ? segmentProgress : 1 - segmentProgress;
+          }
+        }
+      });
+
+      edgeFlowStrengths[edgeIndex] = Math.min(1, strongestWave);
+      edgeFlowProgress[edgeIndex] = strongestProgress;
+      edgeMemory[edgeIndex] = Math.min(1, residual);
+    });
+
+    const edgeResidues = edgeResidueRef.current;
+
+    edgeMemory.forEach((value, edgeIndex) => {
+      const residueTarget = Math.min(1, value + edgeFlowStrengths[edgeIndex] * 0.16);
+
+      edgeResidues[edgeIndex] = MathUtils.damp(
+        edgeResidues[edgeIndex],
+        residueTarget,
+        residueTarget > edgeResidues[edgeIndex] ? 9.2 : 1.16,
+        delta
+      );
+
+      edgeMemory[edgeIndex] = edgeResidues[edgeIndex];
+    });
+
+    const shellWaveBoosts = edgeFlowStrengths.slice(0, LATTICE_EDGE_OFFSET);
+    const latticeWaveBoosts = edgeFlowStrengths.slice(LATTICE_EDGE_OFFSET, CORE_EDGE_OFFSET);
+    const coreWaveBoosts = edgeFlowStrengths.slice(CORE_EDGE_OFFSET);
+    const shellMemoryBoosts = edgeMemory.slice(0, LATTICE_EDGE_OFFSET);
+    const latticeMemoryBoosts = edgeMemory.slice(LATTICE_EDGE_OFFSET, CORE_EDGE_OFFSET);
+    const coreMemoryBoosts = edgeMemory.slice(CORE_EDGE_OFFSET);
+    const shellWavePeak = shellWaveBoosts.reduce((peak, value) => Math.max(peak, value), 0);
+    const latticeWavePeak = latticeWaveBoosts.reduce((peak, value) => Math.max(peak, value), 0);
+    const coreWavePeak = coreWaveBoosts.reduce((peak, value) => Math.max(peak, value), 0);
+    const shellPanelMemoryBoosts = SHELL_PANEL_DEFINITIONS.map(
+      (panel) => panel.reduce((sum, nodeIndex) => sum + nodeResidues[nodeIndex], 0) / panel.length
+    );
+    const latticePanelMemoryBoosts = LATTICE_PANEL_DEFINITIONS.map(
+      (panel) => panel.reduce((sum, nodeIndex) => sum + nodeResidues[nodeIndex], 0) / panel.length
     );
 
-    FRAGMENT_DEFINITIONS.forEach((fragment, index) => {
-      const group = GROUP_DEFINITIONS[fragment.group];
-      const groupFocus = groupPointer[fragment.group];
-      const anchorFocus = groupAnchorBoost[fragment.group];
-      const localDistance = Math.hypot(
-        fragment.assembledPosition[0] - probe.x,
-        fragment.assembledPosition[1] - probe.y
+    NODE_DEFINITIONS.forEach((node, index) => {
+      const charge = charges[index];
+      const base = node.base;
+      const aligned = node.aligned;
+      const structuralImpulse = structuralImpulses[index];
+      const memoryMark = Math.max(memoryMarks[index], nodeResidues[index]);
+      const wobbleX = Math.sin(elapsed * 0.72 + node.phase) * node.wobble[0];
+      const wobbleY = Math.cos(elapsed * 0.68 + node.phase * 1.1) * node.wobble[1];
+      const wobbleZ = Math.sin(elapsed * 0.58 + node.phase * 1.3) * node.wobble[2];
+      const basePosition = positions[index];
+      const structureMix = Math.min(
+        1,
+        node.layer === 'core'
+          ? system.chamber + system.unlockPulse * 0.22
+          : node.layer === 'lattice'
+            ? system.structured * 0.88 + system.unlockPulse * 0.16
+            : system.structured * 0.58 + system.unlockPulse * 0.08
       );
-      const localFocus = Math.max(
-        0,
-        1 - localDistance / (group.radius * (fragment.kind === 'frame' ? 1.2 : 0.94))
-      );
-      const alignTarget = MathUtils.clamp(
-        localFocus * fragment.sensitivity * 0.7 +
-          groupFocus * 0.34 +
-          anchorFocus * 0.74 +
-          system.assembly * fragment.assemblyWeight +
-          system.reveal * fragment.revealWeight,
-        0,
-        1
-      );
-      const drift =
-        fragment.kind === 'frame' ? 0.08 : fragment.kind === 'plate' ? 0.06 : 0.05;
-      const scatterX =
-        fragment.scatterPosition[0] +
-        Math.sin(elapsed * (0.42 + fragment.phase * 0.02) + fragment.phase * 4.2) * drift;
-      const scatterY =
-        fragment.scatterPosition[1] +
-        Math.cos(elapsed * (0.38 + fragment.phase * 0.018) + fragment.phase * 2.8) *
-          drift *
-          0.82;
-      const scatterZ =
-        fragment.scatterPosition[2] +
-        Math.sin(elapsed * (0.34 + fragment.phase * 0.016) + fragment.phase * 3.1) *
-          drift *
-          0.74;
-      const assembledX =
-        fragment.assembledPosition[0] +
-        Math.sin(elapsed * 0.72 + fragment.phase * 5.8) * 0.016 * (1 - alignTarget * 0.4);
-      const assembledY =
-        fragment.assembledPosition[1] +
-        Math.cos(elapsed * 0.68 + fragment.phase * 3.8) * 0.014 * (1 - alignTarget * 0.4);
-      const assembledZ =
-        fragment.assembledPosition[2] +
-        Math.sin(elapsed * 0.6 + fragment.phase * 2.6) * 0.012 * (1 - alignTarget * 0.5);
-      const fieldOffsetX = pointer.currentX * (fragment.group === CORE_GROUP_INDEX ? 0.04 : 0.08);
-      const fieldOffsetY = pointer.currentY * (fragment.group === CORE_GROUP_INDEX ? 0.03 : 0.06);
-      const finalX = MathUtils.lerp(scatterX, assembledX, alignTarget) + fieldOffsetX * (1 - alignTarget);
-      const finalY = MathUtils.lerp(scatterY, assembledY, alignTarget) + fieldOffsetY * (1 - alignTarget);
+      const targetX = MathUtils.lerp(base[0] + wobbleX, aligned[0], structureMix);
+      const targetY = MathUtils.lerp(base[1] + wobbleY, aligned[1], structureMix);
+      const targetZ = MathUtils.lerp(base[2] + wobbleZ, aligned[2], structureMix);
+      const pullX = (probe.x - targetX) * Math.min(0.16, charge * 0.05) * node.sensitive;
+      const pullY = (probe.y - targetY) * Math.min(0.16, charge * 0.05) * node.sensitive;
+      const ripple = Math.sin(elapsed * 3.2 + node.phase + charge * 1.4) * 0.03 * Math.min(1, charge);
+      const radialLength = Math.max(0.001, Math.hypot(targetX, targetY, targetZ));
+      const radialX = targetX / radialLength;
+      const radialY = targetY / radialLength;
+      const radialZ = targetZ / radialLength;
+      const tension =
+        structuralImpulse * (node.layer === 'shell' ? 0.17 : node.layer === 'lattice' ? 0.12 : 0.08) +
+        system.unlockPulse * (node.layer === 'core' ? 0.16 : node.layer === 'lattice' ? 0.08 : 0.04);
+      const chamberVisibility = node.layer === 'core' ? system.chamber : 1;
+      const finalX = targetX + pullX + ripple * 0.8 + radialX * tension;
+      const finalY = targetY + pullY + ripple + radialY * tension;
       const finalZ =
-        MathUtils.lerp(scatterZ, assembledZ, alignTarget) +
-        (system.reveal * 0.05 + system.phaseLift * 0.02) * (fragment.group === CORE_GROUP_INDEX ? 1 : 0.35);
-      const rotationX = MathUtils.lerp(
-        fragment.scatterRotation[0],
-        fragment.assembledRotation[0],
-        alignTarget
+        targetZ +
+        ripple * 0.45 +
+        radialZ * tension * 0.72 +
+        (node.layer === 'core' ? chamberVisibility * 0.08 + system.unlockPulse * 0.12 : system.unlockPulse * 0.03);
+
+      basePosition.set(finalX, finalY, finalZ);
+
+      const coreMesh = nodeCoreRefs.current[index];
+      const glowMesh = nodeGlowRefs.current[index];
+      const material = nodeMaterials.current[index];
+      const glowMaterial = nodeGlowMaterials.current[index];
+      const visibleEnergy = Math.min(
+        1,
+        charge * 0.72 +
+          pointerPresence * 0.26 +
+          system.phaseFlash * 0.3 +
+          structuralImpulse * 0.44 +
+          memoryMark * 0.22
       );
-      const rotationY = MathUtils.lerp(
-        fragment.scatterRotation[1],
-        fragment.assembledRotation[1],
-        alignTarget
-      );
-      const rotationZ = MathUtils.lerp(
-        fragment.scatterRotation[2],
-        fragment.assembledRotation[2],
-        alignTarget
-      );
+      const baseScale =
+        node.scale *
+        (node.layer === 'core'
+          ? 1 + corePhase * 0.34
+          : node.layer === 'lattice'
+            ? 1 + structuredPhase * 0.16
+            : 1 + awakenedPhase * 0.1);
       const scale =
-        MathUtils.lerp(fragment.scatterScale, fragment.assembledScale, alignTarget) +
-        system.reveal * 0.02 +
-        localFocus * 0.03;
-      const groupRef = fragmentGroupRefs.current[index];
-      const surfaceMaterial = surfaceMaterialRefs.current[index];
-      const outlineMaterial = outlineMaterialRefs.current[index];
-      const accentMaterial = accentMaterialRefs.current[index];
+        baseScale *
+        (1 +
+          visibleEnergy * 0.72 +
+          structuralImpulse * 0.52 +
+          memoryMark * 0.2 +
+          (node.layer === 'lattice' ? resonantPhase * 0.16 : node.layer === 'core' ? corePhase * 0.24 : awakenedPhase * 0.1));
 
-      fragmentPositionsRef.current[index].set(finalX, finalY, finalZ);
-      groupSums[fragment.group].x += finalX;
-      groupSums[fragment.group].y += finalY;
-      groupSums[fragment.group].z += finalZ;
-      groupCounts[fragment.group] += 1;
-
-      if (groupRef) {
-        groupRef.position.set(finalX, finalY, finalZ);
-        groupRef.rotation.x = MathUtils.damp(groupRef.rotation.x, rotationX, 4.4, delta);
-        groupRef.rotation.y = MathUtils.damp(groupRef.rotation.y, rotationY, 4.4, delta);
-        groupRef.rotation.z = MathUtils.damp(groupRef.rotation.z, rotationZ, 4.4, delta);
-        groupRef.scale.setScalar(scale);
+      if (coreMesh && material) {
+        coreMesh.position.copy(basePosition);
+        coreMesh.scale.setScalar(scale);
+        coreMesh.visible = chamberVisibility > 0.04;
+        material.opacity =
+          ((node.layer === 'core'
+            ? 0.14 + corePhase * 0.52 + system.unlockPulse * 0.18
+            : node.layer === 'lattice'
+              ? 0.46 + structuredPhase * 0.14
+              : 0.42 + awakenedPhase * 0.1) +
+            memoryMark * 0.12) *
+          chamberVisibility;
+        material.emissiveIntensity =
+          (node.layer === 'core'
+            ? 0.36 + corePhase * 0.68
+            : node.layer === 'lattice'
+              ? 0.22 + resonantPhase * 0.24
+              : 0.2 + awakenedPhase * 0.16) +
+          visibleEnergy * 0.58 +
+          structuralImpulse * 0.22 +
+          memoryMark * 0.1;
       }
 
-      if (surfaceMaterial) {
-        const baseOpacity =
-          fragment.kind === 'frame' ? 0.045 : fragment.kind === 'plate' ? 0.08 : 0.12;
-        surfaceMaterial.opacity =
-          baseOpacity +
-          alignTarget * (fragment.kind === 'frame' ? 0.15 : fragment.kind === 'plate' ? 0.2 : 0.22) +
-          system.reveal * 0.08;
-        surfaceMaterial.emissiveIntensity =
-          0.1 + alignTarget * 0.26 + groupFocus * 0.14 + system.reveal * 0.14;
-      }
-
-      if (outlineMaterial) {
-        outlineMaterial.opacity =
-          0.04 +
-          alignTarget * (fragment.kind === 'frame' ? 0.42 : 0.22) +
-          groupFocus * 0.08 +
-          system.reveal * 0.05;
-      }
-
-      if (accentMaterial) {
-        accentMaterial.opacity =
-          0.05 +
-          alignTarget * (fragment.kind === 'slat' ? 0.3 : 0.16) +
-          anchorFocus * 0.08 +
-          system.phaseLift * 0.04;
-        accentMaterial.emissiveIntensity =
-          0.08 + alignTarget * 0.18 + anchorFocus * 0.12 + system.reveal * 0.08;
-      }
-    });
-
-    GROUP_DEFINITIONS.forEach((group, groupIndex) => {
-      const center = groupCentersRef.current[groupIndex];
-
-      if (groupCounts[groupIndex]) {
-        center.set(
-          groupSums[groupIndex].x / groupCounts[groupIndex],
-          groupSums[groupIndex].y / groupCounts[groupIndex],
-          groupSums[groupIndex].z / groupCounts[groupIndex]
+      if (glowMesh && glowMaterial) {
+        glowMesh.position.copy(basePosition);
+        glowMesh.scale.setScalar(
+          scale *
+            (node.layer === 'core'
+              ? 3.2 + corePhase * 0.5
+              : node.layer === 'lattice'
+                ? 2.6 + resonantPhase * 0.3
+                : 2.3 + awakenedPhase * 0.18)
         );
-      } else {
-        center.set(group.target[0], group.target[1], group.target[2]);
-      }
-    });
-
-    TRACE_LINKS.forEach((link, index) => {
-      const positionAttribute = tracePositionRefs.current[index];
-      const material = traceMaterialRefs.current[index];
-      const from = groupCentersRef.current[link.from];
-      const to = groupCentersRef.current[link.to];
-      const strength =
-        Math.min(groupState[link.from], groupState[link.to]) * 0.52 +
-        system.assembly * 0.12 +
-        system.reveal * link.revealWeight;
-      const positionArray = traceBuffers[index];
-
-      positionArray[0] = from.x;
-      positionArray[1] = from.y;
-      positionArray[2] = from.z;
-      positionArray[3] = to.x;
-      positionArray[4] = to.y;
-      positionArray[5] = to.z;
-
-      if (positionAttribute) {
-        positionAttribute.needsUpdate = true;
-      }
-
-      if (material) {
-        material.opacity = compact ? strength * 0.18 : strength * 0.24;
+        glowMesh.visible = chamberVisibility > 0.04;
+        glowMaterial.opacity =
+          (node.layer === 'core'
+            ? 0.06 + corePhase * 0.14
+            : node.layer === 'lattice'
+              ? 0.04 + resonantPhase * 0.04
+              : 0.035 + awakenedPhase * 0.03) +
+          visibleEnergy * 0.13 +
+          memoryMark * 0.08;
       }
     });
 
     for (let slot = 0; slot < ANCHOR_VISUAL_SLOTS; slot += 1) {
       const anchor = activeAnchors[slot];
-      const groupRef = anchorGroupRefs.current[slot];
-      const outlineMaterial = anchorOutlineRefs.current[slot];
-      const crossMaterial = anchorCrossRefs.current[slot];
-      const planeMaterial = anchorPlaneRefs.current[slot];
+      const group = anchorGroupRefs.current[slot];
+      const outerRing = anchorOuterRingRefs.current[slot];
+      const outerMaterial = anchorOuterMaterials.current[slot];
+      const innerRing = anchorInnerRingRefs.current[slot];
+      const innerMaterial = anchorInnerMaterials.current[slot];
+      const halo = anchorHaloRefs.current[slot];
+      const haloMaterial = anchorHaloMaterials.current[slot];
 
-      if (!groupRef || !outlineMaterial || !crossMaterial || !planeMaterial) {
+      if (!group || !outerRing || !outerMaterial || !innerRing || !innerMaterial || !halo || !haloMaterial) {
         continue;
       }
 
       if (!anchor) {
-        groupRef.visible = false;
+        group.visible = false;
         continue;
       }
 
-      const center = groupCentersRef.current[anchor.groupIndex];
-      const size = anchor.groupIndex === CORE_GROUP_INDEX ? 0.42 : 0.62;
+      const nodePosition = positions[anchor.nodeIndex];
+      const pulse = anchor.pulse;
+      const memory = anchor.strength;
+      const radius = anchor.core ? 0.32 : 0.22;
 
-      groupRef.visible = true;
-      groupRef.position.copy(center);
-      groupRef.rotation.x = Math.sin(elapsed * 0.24 + slot) * 0.18;
-      groupRef.rotation.y = elapsed * 0.24 * (slot % 2 === 0 ? 1 : -1);
-      groupRef.rotation.z = elapsed * 0.16 + slot * 0.14;
-      groupRef.scale.setScalar(size + anchor.settle * 0.22 + anchor.strength * 0.06);
-      outlineMaterial.opacity = 0.08 + anchor.strength * 0.22 + anchor.settle * 0.08;
-      crossMaterial.opacity = 0.05 + anchor.strength * 0.14;
-      planeMaterial.opacity = 0.02 + anchor.strength * 0.08;
+      group.visible = true;
+      group.position.copy(nodePosition);
+      group.rotation.x = elapsed * 0.45 + slot * 0.36;
+      group.rotation.y = elapsed * (anchor.core ? 0.84 : 0.56) * (slot % 2 === 0 ? 1 : -1);
+      group.rotation.z = elapsed * 0.34 * (slot % 2 === 0 ? 1 : -1);
+
+      outerRing.scale.setScalar(radius + (1 - pulse) * (anchor.core ? 1.14 : 0.84) + memory * 0.16);
+      innerRing.scale.setScalar(radius * 0.92 + memory * 0.28 + pulse * 0.16);
+      halo.scale.setScalar(radius * 1.34 + pulse * 0.82 + memory * 0.38);
+
+      outerMaterial.color.set(anchor.core ? '#f6fbff' : '#96e2ff');
+      outerMaterial.opacity = pulse * (anchor.core ? 0.5 : 0.4) + memory * 0.12 + system.phaseFlash * 0.05;
+
+      innerMaterial.color.set(anchor.core ? '#ab8dff' : '#6b7eff');
+      innerMaterial.opacity = 0.04 + memory * 0.18 + pulse * 0.12;
+
+      haloMaterial.color.set(anchor.core ? '#c8f0ff' : '#8a75ff');
+      haloMaterial.opacity = pulse * 0.2 + memory * 0.1;
     }
 
-    if (revealGroupRef.current) {
-      revealGroupRef.current.visible = system.reveal > 0.03;
-      revealGroupRef.current.rotation.y += delta * (0.12 + system.reveal * 0.24);
-      revealGroupRef.current.rotation.x = MathUtils.damp(
-        revealGroupRef.current.rotation.x,
-        0.18 + pointer.currentY * 0.06,
-        3.2,
-        delta
-      );
-      revealGroupRef.current.scale.setScalar(0.68 + system.reveal * 0.44 + system.phaseLift * 0.08);
-      revealGroupRef.current.position.y = MathUtils.damp(
-        revealGroupRef.current.position.y,
-        0.04 + Math.sin(elapsed * 0.72) * 0.02,
-        3.4,
-        delta
-      );
-    }
+    MODULE_DEFINITIONS.forEach((module, index) => {
+      const mesh = moduleRefs.current[index];
+      const material = moduleMaterials.current[index];
+      const nodePosition = positions[module.nodeIndex];
 
-    if (revealFrameRef.current) {
-      revealFrameRef.current.material.opacity = 0.04 + system.reveal * 0.38;
-    }
-
-    if (revealFrameSecondaryRef.current) {
-      revealFrameSecondaryRef.current.material.opacity = 0.03 + system.reveal * 0.22;
-    }
-
-    revealPlaneMaterials.current.forEach((material, index) => {
-      if (!material) {
+      if (!mesh || !material) {
         return;
       }
+
+      const charge = charges[module.nodeIndex];
+      const memoryMark = Math.max(memoryMarks[module.nodeIndex], nodeResidues[module.nodeIndex]);
+      const align = MathUtils.clamp(system.structured * 1.18 + structuredPhase * 0.08, 0, 1);
+      const offsetX = MathUtils.lerp(module.baseOffset[0], module.alignedOffset[0], align);
+      const offsetY = MathUtils.lerp(module.baseOffset[1], module.alignedOffset[1], align);
+      const offsetZ = MathUtils.lerp(module.baseOffset[2], module.alignedOffset[2], align);
+      const offsetLength = Math.max(0.001, Math.hypot(offsetX, offsetY, offsetZ));
+      const offsetSpread =
+        charge * 0.18 +
+        memoryMark * 0.1 +
+        resonantPhase * 0.08 +
+        system.unlockPulse * 0.24 +
+        system.phaseFlash * 0.06;
+
+      mesh.position.set(
+        nodePosition.x + offsetX + (offsetX / offsetLength) * offsetSpread,
+        nodePosition.y + offsetY + (offsetY / offsetLength) * offsetSpread,
+        nodePosition.z + offsetZ + (offsetZ / offsetLength) * offsetSpread
+      );
+      mesh.rotation.x =
+        MathUtils.lerp(module.baseRotation[0], module.alignedRotation[0], align) +
+        charge * 0.24 +
+        system.unlockPulse * 0.2;
+      mesh.rotation.y =
+        MathUtils.lerp(module.baseRotation[1], module.alignedRotation[1], align) +
+        charge * 0.14 +
+        memoryMark * 0.08;
+      mesh.rotation.z =
+        MathUtils.lerp(module.baseRotation[2], module.alignedRotation[2], align) +
+        charge * 0.1 +
+        system.unlockPulse * 0.18;
+      mesh.scale.setScalar(
+        1 +
+          charge * 0.34 +
+          memoryMark * 0.22 +
+          resonantPhase * 0.12 +
+          system.phaseFlash * 0.12 +
+          system.unlockPulse * 0.26
+      );
+      mesh.visible = !compact || index < 4;
 
       material.opacity =
-        0.02 + system.reveal * (index === 0 ? 0.12 : 0.09) + system.phaseLift * 0.04;
+        0.06 +
+        align * 0.18 +
+        charge * 0.14 +
+        memoryMark * 0.1 +
+        structuredPhase * 0.04 +
+        system.unlockPulse * 0.14;
+      material.emissiveIntensity =
+        0.08 +
+        charge * 0.26 +
+        memoryMark * 0.2 +
+        resonantPhase * 0.12 +
+        system.phaseFlash * 0.12 +
+        system.unlockPulse * 0.32;
     });
-
-    if (revealCoreRef.current) {
-      revealCoreRef.current.rotation.x += delta * (0.34 + system.reveal * 0.6);
-      revealCoreRef.current.rotation.y += delta * (0.28 + system.reveal * 0.46);
-      revealCoreRef.current.scale.setScalar(0.16 + system.reveal * 0.28 + system.phaseLift * 0.04);
-    }
-
-    if (revealCoreMaterialRef.current) {
-      revealCoreMaterialRef.current.opacity = 0.08 + system.reveal * 0.24;
-      revealCoreMaterialRef.current.emissiveIntensity = 0.18 + system.reveal * 0.44;
-    }
-
-    revealBraceRefs.current.forEach((brace, index) => {
-      const material = revealBraceMaterials.current[index];
-
-      if (!brace || !material) {
-        return;
-      }
-
-      brace.rotation.z += delta * (index === 0 ? 0.26 : -0.22);
-      brace.scale.setScalar(0.76 + system.reveal * 0.12);
-      material.opacity = 0.03 + system.reveal * 0.16;
-    });
-
-    if (revealLightRef.current) {
-      revealLightRef.current.intensity = 0.2 + system.reveal * 5.6 + system.phaseLift * 1.4;
-    }
 
     if (rootRef.current) {
       rootRef.current.rotation.x = MathUtils.damp(
         rootRef.current.rotation.x,
-        pointer.currentY * 0.1 + Math.sin(elapsed * 0.18) * 0.04,
-        3.6,
+        pointer.dragY * 0.38 +
+          pointer.currentY * 0.12 +
+          Math.sin(elapsed * 0.24) * 0.06 +
+          system.shock * 0.06 +
+          structuredPhase * 0.03,
+        4.2,
         delta
       );
       rootRef.current.rotation.y = MathUtils.damp(
         rootRef.current.rotation.y,
-        pointer.currentX * 0.14 + Math.cos(elapsed * 0.16) * 0.06,
-        3.6,
+        pointer.dragX * 0.48 +
+          pointer.currentX * 0.16 +
+          Math.cos(elapsed * 0.22) * 0.08 -
+          system.shock * 0.08 -
+          corePhase * 0.04,
+        4.2,
         delta
       );
       rootRef.current.rotation.z = MathUtils.damp(
         rootRef.current.rotation.z,
-        Math.sin(elapsed * 0.14) * 0.03 + system.reveal * 0.06,
+        Math.sin(elapsed * 0.18) * 0.04 +
+          resonantPhase * 0.03 +
+          system.phaseFlash * 0.08 +
+          system.unlockPulse * 0.14,
         3.2,
         delta
       );
       rootRef.current.position.y = MathUtils.damp(
         rootRef.current.position.y,
-        0.08 + Math.sin(elapsed * 0.52) * 0.04,
+        0.06 + Math.sin(elapsed * 0.64) * 0.04 - structuredPhase * 0.04 + corePhase * 0.02,
+        3.6,
+        delta
+      );
+      rootRef.current.scale.setScalar(
+        1.02 + awakenedPhase * 0.02 + structuredPhase * 0.025 + system.shock * 0.024 + system.unlockPulse * 0.05
+      );
+    }
+
+    if (chamberRef.current) {
+      chamberRef.current.rotation.y += delta * (0.16 + system.chamber * 0.24 + system.unlockPulse * 0.78);
+      chamberRef.current.rotation.x = MathUtils.damp(
+        chamberRef.current.rotation.x,
+        0.16 + pointer.currentY * 0.08 + corePhase * 0.08 + system.unlockPulse * 0.16,
         3.2,
         delta
       );
-      rootRef.current.scale.setScalar(1 + system.reveal * 0.03 + system.phaseLift * 0.02);
+      chamberRef.current.visible = system.chamber > 0.04;
+      chamberRef.current.scale.setScalar(
+        0.76 +
+          structuredPhase * 0.1 +
+          system.chamber * 0.32 +
+          system.phaseFlash * 0.12 +
+          system.unlockPulse * 0.42
+      );
+    }
+
+    chamberPlaneMaterials.current.forEach((material, index) => {
+      if (!material) {
+        return;
+      }
+
+      material.opacity =
+        0.02 +
+        corePhase * (index === 0 ? 0.1 : 0.08) +
+        system.chamber * (index === 0 ? 0.12 : 0.09) +
+        system.phaseFlash * 0.05 +
+        system.unlockPulse * 0.18;
+    });
+
+    chamberRingRefs.current.forEach((ring, index) => {
+      if (!ring) {
+        return;
+      }
+
+      ring.rotation.x += delta * (index === 0 ? 0.58 : -0.46);
+      ring.rotation.y += delta * (index === 0 ? 0.28 : 0.36);
+      ring.scale.setScalar(
+        0.36 +
+          structuredPhase * 0.08 +
+          system.chamber * 0.28 +
+          corePhase * 0.08 +
+          system.unlockPulse * (index === 0 ? 0.62 : 0.42)
+      );
+      ring.visible = system.chamber > 0.08;
+    });
+
+    chamberRingMaterials.current.forEach((material, index) => {
+      if (!material) {
+        return;
+      }
+
+      material.opacity =
+        0.04 +
+        corePhase * (index === 0 ? 0.08 : 0.06) +
+        system.chamber * (index === 0 ? 0.14 : 0.1) +
+        system.unlockPulse * (index === 0 ? 0.26 : 0.18) +
+        system.phaseFlash * 0.05;
+    });
+
+    if (coreSeedRef.current) {
+      coreSeedRef.current.visible = system.chamber > 0.08;
+      coreSeedRef.current.rotation.x += delta * (0.72 + corePhase * 0.34 + system.unlockPulse * 1.42);
+      coreSeedRef.current.rotation.y += delta * (0.52 + system.chamber * 0.64 + system.unlockPulse * 0.36);
+      coreSeedRef.current.rotation.z += delta * (0.32 + system.phaseFlash * 0.4);
+      coreSeedRef.current.scale.setScalar(0.08 + corePhase * 0.2 + system.chamber * 0.1 + system.unlockPulse * 0.36);
+    }
+
+    if (coreSeedMaterialRef.current) {
+      coreSeedMaterialRef.current.opacity = 0.08 + corePhase * 0.18 + system.chamber * 0.12 + system.unlockPulse * 0.22;
+      coreSeedMaterialRef.current.emissiveIntensity =
+        0.3 + corePhase * 0.42 + system.chamber * 0.34 + system.unlockPulse * 1.18;
+    }
+
+    if (coreHaloRef.current) {
+      coreHaloRef.current.visible = system.chamber > 0.08;
+      coreHaloRef.current.rotation.z += delta * (0.28 + corePhase * 0.22 + system.unlockPulse * 0.58);
+      coreHaloRef.current.scale.setScalar(0.28 + corePhase * 0.16 + system.chamber * 0.12 + system.unlockPulse * 0.48);
+    }
+
+    if (coreHaloMaterialRef.current) {
+      coreHaloMaterialRef.current.opacity = 0.04 + corePhase * 0.12 + system.chamber * 0.12 + system.unlockPulse * 0.24;
+    }
+
+    CORE_SHARD_DEFINITIONS.forEach((shard, index) => {
+      const mesh = coreShardRefs.current[index];
+      const material = coreShardMaterials.current[index];
+
+      if (!mesh || !material) {
+        return;
+      }
+
+      const revealMix = Math.min(1, corePhase * 0.88 + system.unlockPulse * 0.22);
+
+      mesh.visible = system.chamber > 0.08;
+      mesh.rotation.x =
+        MathUtils.lerp(shard.rotation[0], shard.revealRotation[0], revealMix) +
+        Math.sin(elapsed * 0.42 + index * 0.9) * 0.04;
+      mesh.rotation.y =
+        MathUtils.lerp(shard.rotation[1], shard.revealRotation[1], revealMix) +
+        Math.cos(elapsed * 0.38 + index * 0.7) * 0.05;
+      mesh.rotation.z =
+        MathUtils.lerp(shard.rotation[2], shard.revealRotation[2], revealMix) +
+        system.unlockPulse * 0.18;
+      mesh.scale.setScalar(0.76 + revealMix * 0.28 + system.unlockPulse * 0.18);
+
+      material.opacity = 0.03 + revealMix * 0.14 + system.phaseFlash * 0.04 + system.unlockPulse * 0.12;
+      material.emissiveIntensity = 0.08 + revealMix * 0.26 + system.unlockPulse * 0.34;
+    });
+
+    if (innerLightRef.current) {
+      innerLightRef.current.intensity =
+        0.24 + corePhase * 4.2 + system.chamber * 4.4 + system.unlockPulse * 10.4 + (anchorCoreActive ? 3.8 : 0);
     }
 
     if (dustRef.current) {
-      dustRef.current.rotation.y = elapsed * 0.018;
-      dustRef.current.rotation.x = Math.sin(elapsed * 0.16) * 0.02;
-      dustRef.current.position.x = MathUtils.lerp(dustRef.current.position.x, -pointer.currentX * 0.1, 0.04);
-      dustRef.current.position.y = MathUtils.lerp(dustRef.current.position.y, -pointer.currentY * 0.08, 0.04);
+      dustRef.current.rotation.y = elapsed * 0.025;
+      dustRef.current.rotation.x = Math.sin(elapsed * 0.18) * 0.03;
+      dustRef.current.position.x = MathUtils.lerp(dustRef.current.position.x, -pointer.currentX * 0.18, 0.05);
+      dustRef.current.position.y = MathUtils.lerp(dustRef.current.position.y, -pointer.currentY * 0.12, 0.05);
+    }
+
+    ALL_EDGES.forEach(([from, to], edgeIndex) => {
+      const flow = flowRefs.current[edgeIndex];
+      const material = flowMaterials.current[edgeIndex];
+
+      if (!flow || !material) {
+        return;
+      }
+
+      const strength = edgeFlowStrengths[edgeIndex];
+      const residual = edgeMemory[edgeIndex];
+
+      if (strength < 0.025 && residual < 0.05) {
+        flow.visible = false;
+        return;
+      }
+
+      const fromPosition = positions[from];
+      const toPosition = positions[to];
+      const progress = edgeFlowProgress[edgeIndex];
+
+      flow.visible = !compact || edgeIndex % 2 === 0 || strength > 0.08 || residual > 0.12;
+      flow.position.set(
+        MathUtils.lerp(fromPosition.x, toPosition.x, progress),
+        MathUtils.lerp(fromPosition.y, toPosition.y, progress),
+        MathUtils.lerp(fromPosition.z, toPosition.z, progress)
+      );
+      flow.lookAt(toPosition);
+      flow.scale.set(
+        (compact ? 0.82 : 1) * (0.022 + strength * 0.03 + residual * 0.012 + system.unlockPulse * 0.008),
+        (compact ? 0.82 : 1) * (0.018 + strength * 0.022 + residual * 0.01 + system.unlockPulse * 0.006),
+        (compact ? 0.92 : 1.08) * (0.12 + strength * 0.42 + residual * 0.18 + system.unlockPulse * 0.16)
+      );
+
+      if (edgeIndex < LATTICE_EDGE_OFFSET) {
+        material.color.set('#8f7dff');
+      } else if (edgeIndex < CORE_EDGE_OFFSET) {
+        material.color.set('#8fe4ff');
+      } else {
+        material.color.set('#f4fbff');
+      }
+
+      material.opacity = 0.03 + strength * 0.5 + residual * 0.14 + system.unlockPulse * 0.07;
+    });
+
+    writeEdgeBuffers({
+      edges: SHELL_EDGES,
+      positions,
+      charges,
+      edgeBoosts: shellWaveBoosts,
+      memoryBoosts: shellMemoryBoosts,
+      posArray: shellPositions,
+      colorArray: shellColors,
+      opacityBias: 0.08 + system.structured * 0.12,
+      palette: {
+        base: new Color('#6d67ff'),
+        hot: new Color('#bdefff')
+      }
+    });
+
+    writeEdgeBuffers({
+      edges: LATTICE_EDGES,
+      positions,
+      charges,
+      edgeBoosts: latticeWaveBoosts,
+      memoryBoosts: latticeMemoryBoosts,
+      posArray: latticePositions,
+      colorArray: latticeColors,
+      opacityBias: 0.14 + system.structured * 0.18,
+      palette: {
+        base: new Color('#4f94ff'),
+        hot: new Color('#d8f4ff')
+      }
+    });
+
+    writeEdgeBuffers({
+      edges: CORE_EDGES,
+      positions,
+      charges,
+      edgeBoosts: coreWaveBoosts,
+      memoryBoosts: coreMemoryBoosts,
+      posArray: corePositions,
+      colorArray: coreColors,
+      opacityBias: 0.22 + system.chamber * 0.28,
+      palette: {
+        base: new Color('#8f78ff'),
+        hot: new Color('#f6fbff')
+      }
+    });
+
+    writePanelBuffers({
+      panels: SHELL_PANEL_DEFINITIONS,
+      positions,
+      charges,
+      memoryBoosts: shellPanelMemoryBoosts,
+      posArray: shellPanelPositions,
+      colorArray: shellPanelColors,
+      opacityBias: 0.02 + awakenedPhase * 0.12 + structuredPhase * 0.08,
+      palette: {
+        base: new Color('#4732a8'),
+        hot: new Color('#9ca4ff')
+      }
+    });
+
+    writePanelBuffers({
+      panels: LATTICE_PANEL_DEFINITIONS,
+      positions,
+      charges,
+      memoryBoosts: latticePanelMemoryBoosts,
+      posArray: latticePanelPositions,
+      colorArray: latticePanelColors,
+      opacityBias: 0.04 + resonantPhase * 0.14 + corePhase * 0.08,
+      palette: {
+        base: new Color('#254d92'),
+        hot: new Color('#92e1ff')
+      }
+    });
+
+    if (shellPositionRef.current) {
+      shellPositionRef.current.needsUpdate = true;
+    }
+
+    if (shellColorRef.current) {
+      shellColorRef.current.needsUpdate = true;
+    }
+
+    if (shellPanelPositionRef.current) {
+      shellPanelPositionRef.current.needsUpdate = true;
+    }
+
+    if (shellPanelColorRef.current) {
+      shellPanelColorRef.current.needsUpdate = true;
+    }
+
+    if (latticePositionRef.current) {
+      latticePositionRef.current.needsUpdate = true;
+    }
+
+    if (latticeColorRef.current) {
+      latticeColorRef.current.needsUpdate = true;
+    }
+
+    if (latticePanelPositionRef.current) {
+      latticePanelPositionRef.current.needsUpdate = true;
+    }
+
+    if (latticePanelColorRef.current) {
+      latticePanelColorRef.current.needsUpdate = true;
+    }
+
+    if (corePositionRef.current) {
+      corePositionRef.current.needsUpdate = true;
+    }
+
+    if (coreColorRef.current) {
+      coreColorRef.current.needsUpdate = true;
+    }
+
+    if (shellMaterialRef.current) {
+      shellMaterialRef.current.opacity =
+        0.12 +
+        awakenedPhase * 0.1 +
+        resonantPhase * 0.08 +
+        shellWavePeak * 0.2 +
+        structuredPhase * 0.08 +
+        system.shock * 0.08;
+    }
+
+    if (shellPanelMaterialRef.current) {
+      shellPanelMaterialRef.current.opacity =
+        0.008 +
+        awakenedPhase * 0.04 +
+        resonantPhase * 0.05 +
+        structuredPhase * 0.1 +
+        system.phaseFlash * 0.03;
+    }
+
+    if (latticeMaterialRef.current) {
+      latticeMaterialRef.current.opacity =
+        0.18 +
+        awakenedPhase * 0.06 +
+        resonantPhase * 0.14 +
+        structuredPhase * 0.14 +
+        latticeWavePeak * 0.24 +
+        system.unlockPulse * 0.06;
+    }
+
+    if (latticePanelMaterialRef.current) {
+      latticePanelMaterialRef.current.opacity =
+        0.004 +
+        resonantPhase * 0.05 +
+        structuredPhase * 0.08 +
+        corePhase * 0.08 +
+        system.unlockPulse * 0.04;
+    }
+
+    if (coreMaterialRef.current) {
+      coreMaterialRef.current.opacity =
+        0.03 +
+        corePhase * 0.18 +
+        system.chamber * 0.28 +
+        system.phaseFlash * 0.08 +
+        coreWavePeak * 0.32 +
+        system.unlockPulse * 0.24;
     }
   });
 
   return (
     <>
-      <ambientLight intensity={0.78} />
-      <pointLight position={[3.2, 1.6, 3.6]} intensity={14} color="#5f95ff" />
-      <pointLight position={[-3.1, -1.8, 2.2]} intensity={10} color="#8d67ff" />
-      <spotLight position={[0, 2.8, 4.4]} intensity={9} angle={0.44} penumbra={0.9} color="#a6eaff" />
+      <ambientLight intensity={0.9} />
+      <pointLight position={[2.8, 1.9, 3.2]} intensity={18} color="#5f93ff" />
+      <pointLight position={[-3, -1.8, 2]} intensity={14} color="#8a63ff" />
+      <pointLight position={[0, 0.5, 2.5]} intensity={8} color="#e6f3ff" />
+      <spotLight position={[0, 2.6, 3.8]} intensity={12} angle={0.44} penumbra={0.85} color="#86d7ff" />
 
       <points ref={dustRef}>
         <bufferGeometry>
           <bufferAttribute attach="attributes-position" array={dust} count={dust.length / 3} itemSize={3} />
         </bufferGeometry>
         <pointsMaterial
-          color="#d6efff"
-          size={compact ? 0.018 : 0.024}
+          color="#b6ddff"
+          size={compact ? 0.022 : 0.028}
           transparent
-          opacity={0.16}
+          opacity={0.22}
           sizeAttenuation
           depthWrite={false}
         />
       </points>
 
       <group ref={rootRef}>
-        {TRACE_LINKS.map((link, index) => (
-          <lineSegments key={`trace-${link.from}-${link.to}`}>
-            <bufferGeometry>
-              <bufferAttribute
-                ref={(attribute) => {
-                  tracePositionRefs.current[index] = attribute;
-                }}
-                attach="attributes-position"
-                array={traceBuffers[index]}
-                count={2}
-                itemSize={3}
-              />
-            </bufferGeometry>
-            <lineBasicMaterial
+        <pointLight ref={innerLightRef} position={[0, 0, 0]} intensity={0.2} distance={4.2} color="#def6ff" />
+
+        <lineSegments>
+          <bufferGeometry>
+            <bufferAttribute
+              ref={shellPositionRef}
+              attach="attributes-position"
+              array={shellPositions}
+              count={shellPositions.length / 3}
+              itemSize={3}
+            />
+            <bufferAttribute
+              ref={shellColorRef}
+              attach="attributes-color"
+              array={shellColors}
+              count={shellColors.length / 3}
+              itemSize={3}
+            />
+          </bufferGeometry>
+          <lineBasicMaterial
+            ref={shellMaterialRef}
+            vertexColors
+            transparent
+            opacity={0.2}
+            depthWrite={false}
+            blending={AdditiveBlending}
+          />
+        </lineSegments>
+
+        <mesh>
+          <bufferGeometry>
+            <bufferAttribute
+              ref={shellPanelPositionRef}
+              attach="attributes-position"
+              array={shellPanelPositions}
+              count={shellPanelPositions.length / 3}
+              itemSize={3}
+            />
+            <bufferAttribute
+              ref={shellPanelColorRef}
+              attach="attributes-color"
+              array={shellPanelColors}
+              count={shellPanelColors.length / 3}
+              itemSize={3}
+            />
+          </bufferGeometry>
+          <meshBasicMaterial
+            ref={shellPanelMaterialRef}
+            vertexColors
+            transparent
+            opacity={0.03}
+            depthWrite={false}
+            side={DoubleSide}
+            blending={AdditiveBlending}
+          />
+        </mesh>
+
+        <lineSegments>
+          <bufferGeometry>
+            <bufferAttribute
+              ref={latticePositionRef}
+              attach="attributes-position"
+              array={latticePositions}
+              count={latticePositions.length / 3}
+              itemSize={3}
+            />
+            <bufferAttribute
+              ref={latticeColorRef}
+              attach="attributes-color"
+              array={latticeColors}
+              count={latticeColors.length / 3}
+              itemSize={3}
+            />
+          </bufferGeometry>
+          <lineBasicMaterial
+            ref={latticeMaterialRef}
+            vertexColors
+            transparent
+            opacity={0.28}
+            depthWrite={false}
+            blending={AdditiveBlending}
+          />
+        </lineSegments>
+
+        <mesh>
+          <bufferGeometry>
+            <bufferAttribute
+              ref={latticePanelPositionRef}
+              attach="attributes-position"
+              array={latticePanelPositions}
+              count={latticePanelPositions.length / 3}
+              itemSize={3}
+            />
+            <bufferAttribute
+              ref={latticePanelColorRef}
+              attach="attributes-color"
+              array={latticePanelColors}
+              count={latticePanelColors.length / 3}
+              itemSize={3}
+            />
+          </bufferGeometry>
+          <meshBasicMaterial
+            ref={latticePanelMaterialRef}
+            vertexColors
+            transparent
+            opacity={0.02}
+            depthWrite={false}
+            side={DoubleSide}
+            blending={AdditiveBlending}
+          />
+        </mesh>
+
+        <lineSegments>
+          <bufferGeometry>
+            <bufferAttribute
+              ref={corePositionRef}
+              attach="attributes-position"
+              array={corePositions}
+              count={corePositions.length / 3}
+              itemSize={3}
+            />
+            <bufferAttribute
+              ref={coreColorRef}
+              attach="attributes-color"
+              array={coreColors}
+              count={coreColors.length / 3}
+              itemSize={3}
+            />
+          </bufferGeometry>
+          <lineBasicMaterial
+            ref={coreMaterialRef}
+            vertexColors
+            transparent
+            opacity={0.08}
+            depthWrite={false}
+            blending={AdditiveBlending}
+          />
+        </lineSegments>
+
+        {ALL_EDGES.map((_, index) => (
+          <mesh
+            key={`flow-${index}`}
+            ref={(element) => {
+              flowRefs.current[index] = element;
+            }}
+          >
+            <boxGeometry args={[0.16, 0.05, 1]} />
+            <meshBasicMaterial
               ref={(material) => {
-                traceMaterialRefs.current[index] = material;
+                flowMaterials.current[index] = material;
               }}
-              color={TONE_PALETTE[link.tone].outline}
+              color="#8fe4ff"
               transparent
               opacity={0.08}
               blending={AdditiveBlending}
               depthWrite={false}
             />
-          </lineSegments>
+          </mesh>
         ))}
 
-        {FRAGMENT_DEFINITIONS.map((fragment, index) => {
-          const palette = TONE_PALETTE[fragment.tone];
-
-          return (
-            <group
-              key={fragment.id}
-              ref={(element) => {
-                fragmentGroupRefs.current[index] = element;
-              }}
-            >
-              {fragment.kind === 'frame' && (
-                <>
-                  <mesh scale={[fragment.size[0] * 0.92, fragment.size[1] * 0.92, 1]}>
-                    <planeGeometry args={[1, 1]} />
-                    <meshPhysicalMaterial
-                      ref={(material) => {
-                        surfaceMaterialRefs.current[index] = material;
-                      }}
-                      color={palette.surface}
-                      emissive={palette.emissive}
-                      emissiveIntensity={0.16}
-                      metalness={0.12}
-                      roughness={0.2}
-                      clearcoat={1}
-                      clearcoatRoughness={0.08}
-                      transparent
-                      opacity={0.1}
-                      side={DoubleSide}
-                    />
-                  </mesh>
-                  <lineSegments scale={[fragment.size[0], fragment.size[1], 1]}>
-                    <bufferGeometry>
-                      <bufferAttribute
-                        attach="attributes-position"
-                        array={FRAME_OUTLINE}
-                        count={FRAME_OUTLINE.length / 3}
-                        itemSize={3}
-                      />
-                    </bufferGeometry>
-                    <lineBasicMaterial
-                      ref={(material) => {
-                        outlineMaterialRefs.current[index] = material;
-                      }}
-                      color={palette.outline}
-                      transparent
-                      opacity={0.18}
-                      depthWrite={false}
-                      blending={AdditiveBlending}
-                    />
-                  </lineSegments>
-                  <mesh position={[0, 0, 0.014]} scale={[fragment.size[0] * 0.08, fragment.size[1] * 0.84, fragment.size[2]]}>
-                    <boxGeometry args={[1, 1, 1]} />
-                    <meshPhysicalMaterial
-                      ref={(material) => {
-                        accentMaterialRefs.current[index] = material;
-                      }}
-                      color={palette.accent}
-                      emissive={palette.emissive}
-                      emissiveIntensity={0.12}
-                      metalness={0.1}
-                      roughness={0.22}
-                      clearcoat={1}
-                      clearcoatRoughness={0.08}
-                      transparent
-                      opacity={0.08}
-                    />
-                  </mesh>
-                </>
-              )}
-
-              {fragment.kind === 'plate' && (
-                <>
-                  <mesh scale={[fragment.size[0], fragment.size[1], 1]}>
-                    <planeGeometry args={[1, 1]} />
-                    <meshPhysicalMaterial
-                      ref={(material) => {
-                        surfaceMaterialRefs.current[index] = material;
-                      }}
-                      color={palette.surface}
-                      emissive={palette.emissive}
-                      emissiveIntensity={0.14}
-                      metalness={0.1}
-                      roughness={0.22}
-                      clearcoat={1}
-                      clearcoatRoughness={0.08}
-                      transparent
-                      opacity={0.12}
-                      side={DoubleSide}
-                    />
-                  </mesh>
-                  <lineSegments scale={[fragment.size[0] * 0.88, fragment.size[1] * 0.88, 1]}>
-                    <bufferGeometry>
-                      <bufferAttribute
-                        attach="attributes-position"
-                        array={FRAME_OUTLINE}
-                        count={FRAME_OUTLINE.length / 3}
-                        itemSize={3}
-                      />
-                    </bufferGeometry>
-                    <lineBasicMaterial
-                      ref={(material) => {
-                        outlineMaterialRefs.current[index] = material;
-                      }}
-                      color={palette.outline}
-                      transparent
-                      opacity={0.12}
-                      depthWrite={false}
-                      blending={AdditiveBlending}
-                    />
-                  </lineSegments>
-                  <mesh position={[0, 0, 0.012]} scale={[fragment.size[0] * 0.78, fragment.size[1] * 0.08, fragment.size[2]]}>
-                    <boxGeometry args={[1, 1, 1]} />
-                    <meshPhysicalMaterial
-                      ref={(material) => {
-                        accentMaterialRefs.current[index] = material;
-                      }}
-                      color={palette.accent}
-                      emissive={palette.emissive}
-                      emissiveIntensity={0.1}
-                      metalness={0.08}
-                      roughness={0.24}
-                      clearcoat={1}
-                      clearcoatRoughness={0.08}
-                      transparent
-                      opacity={0.08}
-                    />
-                  </mesh>
-                </>
-              )}
-
-              {fragment.kind === 'prism' && (
-                <>
-                  <mesh scale={fragment.size}>
-                    <cylinderGeometry args={[0.5, 0.5, 1, 4]} />
-                    <meshPhysicalMaterial
-                      ref={(material) => {
-                        surfaceMaterialRefs.current[index] = material;
-                      }}
-                      color={palette.surface}
-                      emissive={palette.emissive}
-                      emissiveIntensity={0.16}
-                      metalness={0.14}
-                      roughness={0.18}
-                      clearcoat={1}
-                      clearcoatRoughness={0.08}
-                      transparent
-                      opacity={0.14}
-                    />
-                  </mesh>
-                  <lineSegments scale={[fragment.size[0] * 1.36, fragment.size[1] * 0.42, 1]} rotation={[0, 0, Math.PI / 4]}>
-                    <bufferGeometry>
-                      <bufferAttribute
-                        attach="attributes-position"
-                        array={FRAME_OUTLINE}
-                        count={FRAME_OUTLINE.length / 3}
-                        itemSize={3}
-                      />
-                    </bufferGeometry>
-                    <lineBasicMaterial
-                      ref={(material) => {
-                        outlineMaterialRefs.current[index] = material;
-                      }}
-                      color={palette.outline}
-                      transparent
-                      opacity={0.08}
-                      depthWrite={false}
-                      blending={AdditiveBlending}
-                    />
-                  </lineSegments>
-                  <mesh position={[0, 0, 0.016]} scale={[fragment.size[0] * 0.52, fragment.size[1] * 0.18, fragment.size[2] * 1.1]}>
-                    <boxGeometry args={[1, 1, 1]} />
-                    <meshPhysicalMaterial
-                      ref={(material) => {
-                        accentMaterialRefs.current[index] = material;
-                      }}
-                      color={palette.accent}
-                      emissive={palette.emissive}
-                      emissiveIntensity={0.12}
-                      metalness={0.08}
-                      roughness={0.22}
-                      clearcoat={1}
-                      clearcoatRoughness={0.08}
-                      transparent
-                      opacity={0.1}
-                    />
-                  </mesh>
-                </>
-              )}
-
-              {fragment.kind === 'slat' && (
-                <>
-                  <mesh scale={fragment.size}>
-                    <boxGeometry args={[1, 1, 1]} />
-                    <meshPhysicalMaterial
-                      ref={(material) => {
-                        surfaceMaterialRefs.current[index] = material;
-                      }}
-                      color={palette.surface}
-                      emissive={palette.emissive}
-                      emissiveIntensity={0.12}
-                      metalness={0.1}
-                      roughness={0.22}
-                      clearcoat={1}
-                      clearcoatRoughness={0.08}
-                      transparent
-                      opacity={0.14}
-                    />
-                  </mesh>
-                  <mesh position={[0, 0, 0.02]} scale={[fragment.size[0] * 0.4, fragment.size[1] * 0.78, fragment.size[2] * 1.08]}>
-                    <boxGeometry args={[1, 1, 1]} />
-                    <meshPhysicalMaterial
-                      ref={(material) => {
-                        accentMaterialRefs.current[index] = material;
-                      }}
-                      color={palette.accent}
-                      emissive={palette.emissive}
-                      emissiveIntensity={0.1}
-                      metalness={0.08}
-                      roughness={0.2}
-                      clearcoat={1}
-                      clearcoatRoughness={0.08}
-                      transparent
-                      opacity={0.1}
-                    />
-                  </mesh>
-                </>
-              )}
-            </group>
-          );
-        })}
-
-        {Array.from({ length: ANCHOR_VISUAL_SLOTS }).map((_, slot) => (
-          <group
-            key={`anchor-${slot}`}
-            ref={(element) => {
-              anchorGroupRefs.current[slot] = element;
-            }}
-          >
-            <lineSegments>
-              <bufferGeometry>
-                <bufferAttribute
-                  attach="attributes-position"
-                  array={FRAME_OUTLINE}
-                  count={FRAME_OUTLINE.length / 3}
-                  itemSize={3}
-                />
-              </bufferGeometry>
-              <lineBasicMaterial
-                ref={(material) => {
-                  anchorOutlineRefs.current[slot] = material;
-                }}
-                color="#e3f7ff"
-                transparent
-                opacity={0.14}
-                depthWrite={false}
-                blending={AdditiveBlending}
-              />
-            </lineSegments>
-            <lineSegments rotation={[Math.PI / 2.9, 0, slot % 2 === 0 ? 0.18 : -0.18]} scale={[0.7, 0.7, 1]}>
-              <bufferGeometry>
-                <bufferAttribute
-                  attach="attributes-position"
-                  array={FRAME_OUTLINE}
-                  count={FRAME_OUTLINE.length / 3}
-                  itemSize={3}
-                />
-              </bufferGeometry>
-              <lineBasicMaterial
-                ref={(material) => {
-                  anchorCrossRefs.current[slot] = material;
-                }}
-                color="#8ecfff"
-                transparent
-                opacity={0.1}
-                depthWrite={false}
-                blending={AdditiveBlending}
-              />
-            </lineSegments>
-            <mesh scale={[0.72, 0.42, 1]}>
-              <planeGeometry args={[1, 1]} />
-              <meshBasicMaterial
-                ref={(material) => {
-                  anchorPlaneRefs.current[slot] = material;
-                }}
-                color={slot % 2 === 0 ? '#7a6dff' : '#6cc7ff'}
-                transparent
-                opacity={0.04}
-                depthWrite={false}
-                blending={AdditiveBlending}
-                side={DoubleSide}
-              />
-            </mesh>
-          </group>
-        ))}
-
-        <group ref={revealGroupRef}>
-          <pointLight ref={revealLightRef} position={[0, 0, 0.1]} intensity={0.2} distance={3.6} color="#dff7ff" />
-
-          <lineSegments ref={revealFrameRef} scale={[1.1, 1.5, 1]}>
-            <bufferGeometry>
-              <bufferAttribute
-                attach="attributes-position"
-                array={FRAME_OUTLINE}
-                count={FRAME_OUTLINE.length / 3}
-                itemSize={3}
-              />
-            </bufferGeometry>
-            <lineBasicMaterial
-              color="#effbff"
-              transparent
-              opacity={0.16}
-              depthWrite={false}
-              blending={AdditiveBlending}
-            />
-          </lineSegments>
-
-          <lineSegments ref={revealFrameSecondaryRef} rotation={[0, 0, Math.PI / 10]} scale={[0.72, 0.98, 1]}>
-            <bufferGeometry>
-              <bufferAttribute
-                attach="attributes-position"
-                array={FRAME_OUTLINE}
-                count={FRAME_OUTLINE.length / 3}
-                itemSize={3}
-              />
-            </bufferGeometry>
-            <lineBasicMaterial
-              color="#8fd9ff"
-              transparent
-              opacity={0.12}
-              depthWrite={false}
-              blending={AdditiveBlending}
-            />
-          </lineSegments>
-
+        <group ref={chamberRef}>
           {[0, 1].map((planeIndex) => (
             <mesh
-              key={`reveal-plane-${planeIndex}`}
-              rotation={
-                planeIndex === 0
-                  ? [Math.PI / 3.2, Math.PI / 4.3, 0.14]
-                  : [-Math.PI / 2.8, -Math.PI / 5.1, -0.18]
-              }
+              key={planeIndex}
+              rotation={planeIndex === 0 ? [Math.PI / 3.2, Math.PI / 4.3, 0.12] : [-Math.PI / 2.7, -Math.PI / 5.2, -0.18]}
             >
-              <planeGeometry args={planeIndex === 0 ? [1.16, 0.66] : [0.82, 1.04]} />
+              <planeGeometry args={[1.26, 0.76]} />
               <meshBasicMaterial
                 ref={(material) => {
-                  revealPlaneMaterials.current[planeIndex] = material;
+                  chamberPlaneMaterials.current[planeIndex] = material;
                 }}
-                color={planeIndex === 0 ? '#8fd8ff' : '#957dff'}
+                color={planeIndex === 0 ? '#82d6ff' : '#9778ff'}
                 transparent
                 opacity={0.04}
                 blending={AdditiveBlending}
@@ -1250,45 +1739,219 @@ function AssemblyField({ compact, interaction }) {
             </mesh>
           ))}
 
-          <mesh ref={revealCoreRef}>
-            <cylinderGeometry args={[0.24, 0.18, 1, 6]} />
-            <meshPhysicalMaterial
-              ref={revealCoreMaterialRef}
-              color="#edf7ff"
-              emissive="#8f78ff"
-              emissiveIntensity={0.24}
-              metalness={0.14}
-              roughness={0.16}
-              clearcoat={1}
-              clearcoatRoughness={0.08}
+          {[0, 1].map((ringIndex) => (
+            <mesh
+              key={`chamber-ring-${ringIndex}`}
+              ref={(element) => {
+                chamberRingRefs.current[ringIndex] = element;
+              }}
+              rotation={ringIndex === 0 ? [Math.PI / 2.8, Math.PI / 4.2, 0.18] : [-Math.PI / 3.1, Math.PI / 5.4, -0.32]}
+            >
+              <torusGeometry args={[1, ringIndex === 0 ? 0.06 : 0.04, 12, 72]} />
+              <meshBasicMaterial
+                ref={(material) => {
+                  chamberRingMaterials.current[ringIndex] = material;
+                }}
+                color={ringIndex === 0 ? '#8fe4ff' : '#9d80ff'}
+                transparent
+                opacity={0.06}
+                blending={AdditiveBlending}
+                depthWrite={false}
+              />
+            </mesh>
+          ))}
+
+          <mesh ref={coreHaloRef} rotation={[Math.PI / 2.5, Math.PI / 4.8, 0.12]}>
+            <torusGeometry args={[1, 0.05, 10, 72]} />
+            <meshBasicMaterial
+              ref={coreHaloMaterialRef}
+              color="#c9f2ff"
               transparent
-              opacity={0.16}
+              opacity={0.08}
+              blending={AdditiveBlending}
+              depthWrite={false}
             />
           </mesh>
 
-          {[0, 1].map((braceIndex) => (
+          {CORE_SHARD_DEFINITIONS.map((shard, index) => (
             <mesh
-              key={`reveal-brace-${braceIndex}`}
+              key={`core-shard-${index}`}
               ref={(element) => {
-                revealBraceRefs.current[braceIndex] = element;
+                coreShardRefs.current[index] = element;
               }}
-              position={braceIndex === 0 ? [0, 0.24, 0.12] : [0, -0.22, 0.08]}
-              rotation={braceIndex === 0 ? [0, 0, Math.PI / 5.8] : [0, 0, -Math.PI / 6.2]}
+              rotation={shard.rotation}
             >
-              <boxGeometry args={[0.78, 0.04, 0.12]} />
+              <boxGeometry args={shard.size} />
+              <meshPhysicalMaterial
+                ref={(material) => {
+                  coreShardMaterials.current[index] = material;
+                }}
+                color={shard.color}
+                emissive={shard.emissive}
+                emissiveIntensity={0.12}
+                metalness={0.18}
+                roughness={0.18}
+                clearcoat={1}
+                clearcoatRoughness={0.08}
+                transparent
+                opacity={0.08}
+              />
+            </mesh>
+          ))}
+
+          <mesh ref={coreSeedRef}>
+            <octahedronGeometry args={[1, 0]} />
+            <meshPhysicalMaterial
+              ref={coreSeedMaterialRef}
+              color="#eef7ff"
+              emissive="#8f78ff"
+              emissiveIntensity={0.42}
+              metalness={0.14}
+              roughness={0.18}
+              clearcoat={1}
+              clearcoatRoughness={0.08}
+              transparent
+              opacity={0.18}
+            />
+          </mesh>
+        </group>
+
+        {MODULE_DEFINITIONS.map((module, index) => (
+          <mesh
+            key={`module-${index}`}
+            ref={(element) => {
+              moduleRefs.current[index] = element;
+            }}
+          >
+            <boxGeometry args={module.size} />
+            <meshPhysicalMaterial
+              ref={(material) => {
+                moduleMaterials.current[index] = material;
+              }}
+              color={index % 2 === 0 ? '#82d6ff' : '#9b7eff'}
+              emissive={index % 2 === 0 ? '#2f92ff' : '#6e4cff'}
+              emissiveIntensity={0.12}
+              metalness={0.18}
+              roughness={0.2}
+              clearcoat={1}
+              clearcoatRoughness={0.08}
+              transparent
+              opacity={0.14}
+            />
+          </mesh>
+        ))}
+
+        {NODE_DEFINITIONS.map((node, index) => (
+          <group key={node.id}>
+            <mesh
+              ref={(element) => {
+                nodeGlowRefs.current[index] = element;
+              }}
+            >
+              <sphereGeometry args={[1, 18, 18]} />
               <meshBasicMaterial
                 ref={(material) => {
-                  revealBraceMaterials.current[braceIndex] = material;
+                  nodeGlowMaterials.current[index] = material;
                 }}
-                color={braceIndex === 0 ? '#c7f1ff' : '#a190ff'}
+                color={node.layer === 'core' ? '#a48aff' : '#7fdcff'}
                 transparent
                 opacity={0.08}
                 depthWrite={false}
                 blending={AdditiveBlending}
               />
             </mesh>
-          ))}
-        </group>
+
+            <mesh
+              ref={(element) => {
+                nodeCoreRefs.current[index] = element;
+              }}
+            >
+              {node.layer === 'core' ? (
+                <octahedronGeometry args={[1, 0]} />
+              ) : node.layer === 'lattice' ? (
+                <icosahedronGeometry args={[1, 0]} />
+              ) : (
+                <sphereGeometry args={[1, 14, 14]} />
+              )}
+              <meshStandardMaterial
+                ref={(material) => {
+                  nodeMaterials.current[index] = material;
+                }}
+                color={node.layer === 'core' ? '#dfd6ff' : '#edf4ff'}
+                emissive={node.layer === 'core' ? '#7d5cff' : '#2799ff'}
+                emissiveIntensity={0.28}
+                roughness={0.22}
+                metalness={0.12}
+                transparent
+                opacity={0.72}
+              />
+            </mesh>
+          </group>
+        ))}
+
+        {Array.from({ length: ANCHOR_VISUAL_SLOTS }).map((_, slot) => (
+          <group
+            key={`anchor-visual-${slot}`}
+            ref={(element) => {
+              anchorGroupRefs.current[slot] = element;
+            }}
+          >
+            <mesh
+              ref={(element) => {
+                anchorHaloRefs.current[slot] = element;
+              }}
+            >
+              <sphereGeometry args={[1, 16, 16]} />
+              <meshBasicMaterial
+                ref={(material) => {
+                  anchorHaloMaterials.current[slot] = material;
+                }}
+                color="#8a75ff"
+                transparent
+                opacity={0.08}
+                blending={AdditiveBlending}
+                depthWrite={false}
+              />
+            </mesh>
+
+            <mesh
+              ref={(element) => {
+                anchorOuterRingRefs.current[slot] = element;
+              }}
+            >
+              <torusGeometry args={[1, 0.05, 10, 72]} />
+              <meshBasicMaterial
+                ref={(material) => {
+                  anchorOuterMaterials.current[slot] = material;
+                }}
+                color="#96e2ff"
+                transparent
+                opacity={0.12}
+                blending={AdditiveBlending}
+                depthWrite={false}
+              />
+            </mesh>
+
+            <mesh
+              ref={(element) => {
+                anchorInnerRingRefs.current[slot] = element;
+              }}
+              rotation={[Math.PI / 2.35, 0, 0]}
+            >
+              <torusGeometry args={[1, 0.026, 10, 64]} />
+              <meshBasicMaterial
+                ref={(material) => {
+                  anchorInnerMaterials.current[slot] = material;
+                }}
+                color="#6b7eff"
+                transparent
+                opacity={0.08}
+                blending={AdditiveBlending}
+                depthWrite={false}
+              />
+            </mesh>
+          </group>
+        ))}
       </group>
     </>
   );
@@ -1307,6 +1970,12 @@ export default function SceneCanvas() {
     currentY: 0,
     speed: 0,
     inside: false,
+    field: 0,
+    dragX: 0,
+    dragY: 0,
+    dragTargetX: 0,
+    dragTargetY: 0,
+    dragging: false,
     lastPointerX: 0,
     lastPointerY: 0,
     clickQueue: []
@@ -1349,11 +2018,19 @@ export default function SceneCanvas() {
     const y = -(((event.clientY - rect.top) / rect.height) * 2 - 1);
     const pointer = interactionRef.current;
 
+    if (pointer.dragging) {
+      const deltaX = x - pointer.lastPointerX;
+      const deltaY = y - pointer.lastPointerY;
+
+      pointer.dragTargetX = MathUtils.clamp(pointer.dragTargetX + deltaX * 0.9, -1, 1);
+      pointer.dragTargetY = MathUtils.clamp(pointer.dragTargetY + deltaY * 0.8, -1, 1);
+    }
+
     pointer.targetX = x;
     pointer.targetY = y;
     pointer.speed = Math.min(
-      1,
-      Math.hypot(x - pointer.lastPointerX, y - pointer.lastPointerY) * 2.1
+      1.2,
+      Math.hypot(x - pointer.lastPointerX, y - pointer.lastPointerY) * 2.2
     );
     pointer.lastPointerX = x;
     pointer.lastPointerY = y;
@@ -1368,6 +2045,7 @@ export default function SceneCanvas() {
     pointer.targetX = 0;
     pointer.targetY = 0;
     pointer.inside = false;
+    pointer.dragging = false;
     updateSpotlight(50, 50, 0);
   };
 
@@ -1377,9 +2055,14 @@ export default function SceneCanvas() {
     const y = -(((event.clientY - rect.top) / rect.height) * 2 - 1);
     const pointer = interactionRef.current;
 
+    pointer.dragging = true;
     pointer.lastPointerX = x;
     pointer.lastPointerY = y;
     pointer.clickQueue.push({ x, y });
+  };
+
+  const handlePointerUp = () => {
+    interactionRef.current.dragging = false;
   };
 
   if (mode.reduced) {
@@ -1393,14 +2076,20 @@ export default function SceneCanvas() {
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
       onPointerDown={handlePointerDown}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
     >
       <Canvas
-        dpr={mode.compact ? [1, 1.15] : [1, 1.65]}
-        camera={{ position: [0, 0, 7.2], fov: mode.compact ? 42 : 34 }}
+        dpr={mode.compact ? [1, 1.2] : [1, 1.7]}
+        camera={{ position: [0, 0, 6.7], fov: mode.compact ? 42 : 34 }}
       >
-        <AssemblyField key={mode.compact ? 'compact' : 'full'} compact={mode.compact} interaction={interactionRef} />
+        <ResonanceLattice
+          key={mode.compact ? 'compact' : 'full'}
+          compact={mode.compact}
+          interaction={interactionRef}
+        />
       </Canvas>
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_28%,rgba(7,11,24,0.52)_100%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_26%,rgba(7,11,24,0.52)_100%)]" />
     </div>
   );
 }

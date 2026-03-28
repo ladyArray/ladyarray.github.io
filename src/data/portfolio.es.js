@@ -20,8 +20,8 @@ export const portfolioEs = {
     },
     hero: {
       visualDirectionEyebrow: 'Enfoque de solución',
-      sceneLabel: 'Campo de ensamblaje',
-      sceneHint: 'Guía las capas para alinear y estabilizar la estructura oculta.'
+      sceneLabel: 'Lattice resonante',
+      sceneHint: 'Recorre el grafo y pulsa para fijar rutas de resonancia y abrir el núcleo.'
     },
     sections: {
       about: 'Enfoque de solución',
